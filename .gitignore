@@ -24,5 +24,6 @@
 #except
 !.gitignore
 !/Arduino/mimetik
+!/OF/apps
 #!/OF/apps/myApps/mimetik/src
 #!/OF/apps/myApps/mimetik/bin/data
