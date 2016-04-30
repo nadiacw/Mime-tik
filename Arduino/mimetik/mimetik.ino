@@ -14,12 +14,12 @@ void setup() {
 }
 
 void loop() {
-  
+
   // Get BT messages
   if(BT.available()){
     int value = BT.read();
     if(value == 'R'){
-      // do things
+      // do cooooool things
     }
   }
   // Send BT messages
