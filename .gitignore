@@ -22,9 +22,9 @@
 
 #except
 !.gitignore
-# !/Arduino/mimetik
-# !/OF
-# /OF/
+ !/Arduino/mimetik
+ !/OF
+ /OF/
 
-#!/OF/apps/myApps/mimetik/src
-#!/OF/apps/myApps/mimetik/bin/data
+!/OF/apps/myApps/mimetik/src
+!/OF/apps/myApps/mimetik/bin/data
