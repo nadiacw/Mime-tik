@@ -18,6 +18,11 @@
 /OF/apps/myApps/mimetik/*.*
 /OF/apps/myApps/mimetik/Makefile
 
+*.sln
+*.vcxproj
+*.filters
+*.user
+
 
 
 #except
