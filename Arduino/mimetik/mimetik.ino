@@ -1,10 +1,11 @@
 //////////////////////////////////////////////////////
 // Bluetooth Communication and state implementation //
 //////////////////////////////////////////////////////
-
+#include "Adafruit_TCS34725.h"
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include "Vector3.h"
+#include "SensorColor.h"
 
 int x, y, z;
 float xm, ym, zm, temp;
@@ -15,6 +16,7 @@ Vector3 *possibleFace;
 
 Vector3 *currentAcc;
 Vector3 *currentFace;
+SensorColor *colorSensor;
 
 #define LED_PIN 3
 
@@ -23,7 +25,13 @@ const int ypin = A2;                  // y-axis
 const int zpin = A1;                  // z-axis (only on 3-axis models)
 
 
+/**************** Detect color settings *************************/
+
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+
 void setup() {
+  
+  Serial.begin(9600);
   //-------------ACC CONFIG ----------------//
   analogReference(EXTERNAL);  // sets the serial port to 9600
   x = analogRead(0);
@@ -31,10 +39,24 @@ void setup() {
   z = analogRead(2);
   currentAcc = new  Vector3(x,y,z);
   currentFace = new Vector3(1, 1, 0);
+  
+  colorSensor = new SensorColor(tcs);
+
 }
 
 void loop() {
+  /***************************************************
+  * detection color
+  */
+ 
+  // detection color logic
+  colorSensor->calculateColor(tcs);
 
+  
+  /*****************************************************
+  * acc analog reads
+  */
+  
   x = analogRead(0);       // read analog input pin 0
   delay(1);
   y = analogRead(1);       // read analog input pin 1
@@ -42,7 +64,7 @@ void loop() {
   z = analogRead(2);       // read analog input pin 2
   delay(1);
 
-  Serial.begin(9600);
+
 
   //zero_G is the reading we expect from the sensor when it detects
   //no acceleration.  Subtract this value from the sensor reading to
@@ -105,5 +127,36 @@ void detectFace(Vector3 *currentAcc)
     foundNewPossibleFace = false; 
     Serial.println("Is not moving");
   }  
+}
+
+
+
+void calculateColor() {
+  
+   // color variables
+  uint16_t clear, red, green, blue;
+  tcs.setInterrupt(false);      // turn on LED
+  delay(60);  // takes 50ms to read  
+  tcs.getRawData(&red, &green, &blue, &clear);
+  tcs.setInterrupt(true);  // turn off LED
+  
+  // Figure out some basic hex code for visualization
+  uint32_t sum = clear;
+  float r, g, b;
+  r = red; r /= sum;
+  g = green; g /= sum;
+  b = blue; b /= sum;
+  r *= 256; g *= 256; b *= 256;
+
+
+  Serial.print("C:\t"); Serial.print(clear);
+  Serial.print("\tR:\t"); Serial.print(red);
+  Serial.print("\tG:\t"); Serial.print(green);
+  Serial.print("\tB:\t"); Serial.print(blue);
+  Serial.println("");
+}
+
+void detectColor() {
+  
 }
 
