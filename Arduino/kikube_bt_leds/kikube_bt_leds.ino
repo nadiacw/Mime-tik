@@ -1,3 +1,4 @@
+
 #include <Adafruit_NeoPixel.h>
 #include <SoftwareSerial.h>
 #include <avr/power.h>
@@ -14,18 +15,23 @@ void setup() {
   Serial.begin(9600);
   BT.begin(9600);
 
+  Serial.println("Setup");
   // LEDs setup
   pixels.begin();
-
+  
   BT.print("a");
 }
 
 void loop() {
-  //BT.print("n");
+    Serial.print(BT.available());
 
-  if (BT.available()) {
-
+  if (BT.available() > 0) {
+    Serial.println("BT available");
     char value = BT.read();
+    
+    Serial.print("BT value: ");
+    Serial.print(value);
+    
     if (value == 'r'){
       randomColor();
     }
