@@ -16,6 +16,8 @@ SensorColor::~SensorColor()
 {
 }
 
+
+// Calculate color from the color sensor
 void SensorColor::calculateColor(Adafruit_TCS34725 tcs)
 {
   // color variables
@@ -31,15 +33,78 @@ void SensorColor::calculateColor(Adafruit_TCS34725 tcs)
    current_g = green; current_g /= sum;
    current_b = blue; current_b /= sum;
    current_r *= 256; current_g *= 256; current_b *= 256;
-
-
-   Serial.print("C:\t"); Serial.print(clear);
-   Serial.print("\tR:\t"); Serial.print(red);
-   Serial.print("\tG:\t"); Serial.print(green);
-   Serial.print("\tB:\t"); Serial.print(blue);
-   Serial.println("");
+   
 }
-void SensorColor::detectColor()
+
+
+// detect which color is to display the states
+int SensorColor::detectColor()
+{
+  int temp_max_rgb = getMax(current_r,current_g,current_b);
+
+  if(max_rgb != temp_max_rgb && firstDetection)
+  {
+    firstDetection = false;
+    timer = millis();
+    Serial.print("First detection done");
+  }
+  else if(max_rgb != temp_max_rgb && !firstDetection)
+  {
+    if(millis() - timer > 1000)
+    {
+      max_rgb = temp_max_rgb;
+      firstDetection = true;
+      timer = 0;
+      Serial.print("Detection done: ");
+      Serial.print(max_rgb);
+    }
+  }
+  else
+  {
+    Serial.print("Colors are equal");
+    firstDetection = true;
+    timer = 0;
+  }
+  Serial.println("");
+  
+  return max_rgb;
+}
+
+int SensorColor::getMax(float r,float g,float b)
 {
 
-}
+    if(r > g)
+    {
+      if(r > b)
+      {
+        return 0;
+      }
+      else
+      {
+        return 2;
+      }
+    } 
+    else if(g > b)
+    {
+        return 1;
+    } 
+    else
+    {
+      return 2;
+    }
+ }
+
+ 
+// print all the results
+ void SensorColor::printResults() {
+  
+   
+   Serial.print("R:\t"); Serial.print(current_r);
+   Serial.print("\tG: "); Serial.print(current_g);
+   Serial.print("\tB: "); Serial.print(current_b);
+   Serial.print("\tMax value: "); Serial.print(max_rgb);
+   Serial.print(" --> "); 
+   
+ }
+  
+

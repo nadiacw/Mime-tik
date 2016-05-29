@@ -2,6 +2,7 @@
 // Bluetooth Communication and state implementation //
 //////////////////////////////////////////////////////
 #include "Adafruit_TCS34725.h"
+#include <Adafruit_NeoPixel.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include "Vector3.h"
@@ -18,40 +19,106 @@ Vector3 *currentAcc;
 Vector3 *currentFace;
 SensorColor *colorSensor;
 
-#define LED_PIN 3
 
 const int xpin = A3;                  // x-axis of the accelerometer
 const int ypin = A2;                  // y-axis
 const int zpin = A1;                  // z-axis (only on 3-axis models)
 
+/********* Bluetooth settings *********/
+SoftwareSerial BT(10, 11); // Bluetooth 10 RX, 11 TX.
 
 /**************** Detect color settings *************************/
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+String str_detectedColor;
+
+/*************** Pixels settings ****************/
+#define LED_PIN 3
+char values[255];
+int i = 0;
+#define PIN            3
+#define NUMPIXELS      6
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   
   Serial.begin(9600);
-  //-------------ACC CONFIG ----------------//
+  
+  // start the connection via bluetooth with tx 9600
+  BT.begin(9600);
+
+  // LEDs setup
+  pixels.begin();
+  
+  // set acc inputs
   analogReference(EXTERNAL);  // sets the serial port to 9600
   x = analogRead(0);
   y = analogRead(1);
   z = analogRead(2);
   currentAcc = new  Vector3(x,y,z);
   currentFace = new Vector3(1, 1, 0);
-  
+
+  // initialize the sensor color object
   colorSensor = new SensorColor(tcs);
 
 }
 
 void loop() {
-  /***************************************************
+
+   /***************************************************
+  * Bluetooth set/get data
+  */
+ if (BT.available() > 0) {
+
+    // get value from OF
+    if(BT.read()) {
+      
+      char value = BT.read();
+      
+       // change color depends on the received value
+      if (value == 'r'){
+        randomColor();
+      }
+      // restart values 
+      value = 0;
+      clean();
+      
+    }
+  } 
+ 
+    
+   /***************************************************
   * detection color
   */
- 
-  // detection color logic
+   
   colorSensor->calculateColor(tcs);
+  colorSensor->printResults();
+  int detectedColor = colorSensor->detectColor();
+  
+  switch(detectedColor) 
+  {
+    case 0: str_detectedColor = "red"; break;
+    case 1: str_detectedColor = "green"; break;
+    case 2: str_detectedColor = "blue"; break;
+  }
+  
+  char* buff = (char*) malloc(sizeof(char)*(str_detectedColor.length() + 1)); 
+  str_detectedColor.toCharArray(buff, str_detectedColor.length() + 1); 
+  /*****************************************************
+  * end detection color
+  */
+  
+  Serial.print("String to send to OF: ");
+  Serial.println(buff);
+  //Send to OF the detected color
+  if (Serial.available()) {
+    BT.write(buff);
+    free(buff)
+  }
 
+   /*****************************************************
+  * end bluetooth set/get data
+  */
   
   /*****************************************************
   * acc analog reads
@@ -129,34 +196,25 @@ void detectFace(Vector3 *currentAcc)
   }  
 }
 
-
-
-void calculateColor() {
-  
-   // color variables
-  uint16_t clear, red, green, blue;
-  tcs.setInterrupt(false);      // turn on LED
-  delay(60);  // takes 50ms to read  
-  tcs.getRawData(&red, &green, &blue, &clear);
-  tcs.setInterrupt(true);  // turn off LED
-  
-  // Figure out some basic hex code for visualization
-  uint32_t sum = clear;
-  float r, g, b;
-  r = red; r /= sum;
-  g = green; g /= sum;
-  b = blue; b /= sum;
-  r *= 256; g *= 256; b *= 256;
-
-
-  Serial.print("C:\t"); Serial.print(clear);
-  Serial.print("\tR:\t"); Serial.print(red);
-  Serial.print("\tG:\t"); Serial.print(green);
-  Serial.print("\tB:\t"); Serial.print(blue);
-  Serial.println("");
+// clean values
+void clean()
+{
+  for (int cl = 0; cl <= i; cl++)
+  {
+    values[cl] = 0;
+  }
+  i = 0;
 }
 
-void detectColor() {
-  
+// set random color to send
+void randomColor()
+{
+  int red = random(0, 255);
+  int green = random(0, 255);
+  int blue = random(0, 255);
+  for (int i = 0; i < NUMPIXELS; i++) {
+    pixels.setPixelColor(i, pixels.Color(red, green, blue));
+    pixels.show();
+  }
 }
 

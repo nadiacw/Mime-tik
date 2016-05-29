@@ -12,12 +12,12 @@
 class Kikube
 {
 public:
-    Kikube(string id);
+    Kikube(string id,string device,int baudrate);
     ~Kikube();
     string getId();
     string getColor();
     string getDirection();
-    
+    ofSerial kikubeSerial;
     
     
 private:

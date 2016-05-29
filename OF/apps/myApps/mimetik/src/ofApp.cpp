@@ -8,7 +8,7 @@ void ofApp::setup(){
     //mySerial.listDevices();
     int id = 0;
     string id_string = "";
-    vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList();
+    vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList(); //Every port
     for (int i = 0; i < deviceList.size(); i++) {
         
         if(deviceList[i].getDeviceName().find("cu.HC-06-DevB") == 0) {
@@ -17,22 +17,14 @@ void ofApp::setup(){
             id_string = "Kiku_"+to_string(id);
             
             // new kikube
-            Kikube kik_temp = Kikube(id_string);
+            Kikube kik_temp = Kikube(id_string, deviceList[i].getDeviceName(), 9600);
             
             // push new kikube into a list of kikubes
             kikubeList.push_back(kik_temp);
             
-            //serial port must match what was declared in arduino Code ... 9600
-            kikubesSerial[i].setup(deviceList[i].getDeviceName(), 9600);
-            kikubesSerial[i].flush(); //flush the serial port once before we start
-
             id++;
         }
     }
-    
-    
-
-
 }
 
 //--------------------------------------------------------------
@@ -40,31 +32,32 @@ void ofApp::update(){
     
     //SERIAL PART
     // handshake "a"
-    for (int con = 0; con<MAX_KIKUBES; con++) {
-        
-        
-        if(kikubesSerial[con].available() >= NUM_MSG_BYTES) {
-            
+    for (int i = 0; i<kikubeList.size(); i++)
+    {
+        string bytesReceived = "";
+        if(kikubeList[i].kikubeSerial.isInitialized())
+        {
             //go through all received bytes
-            for(int i=0; i<NUM_MSG_BYTES; i++){
-                
+            for(int j=0; j<kikubeList[i].kikubeSerial.available(); j++)
+            {
                 //read this byte
-                int val = kikubesSerial[con].readByte();
+                int val = kikubeList[i].kikubeSerial.readByte();
                 
                 //store it in the array at index i
-                bytesReceived[i] = val;
+                bytesReceived += val;
             }
             
             //Print
-            // cout << "bytesReceived[0] = " << bytesReceived[0] << endl;
-            //cout << "bytesReceived[1] = " << bytesReceived[1] << endl;
-            // cout << "------------------------"<<endl;
+            cout << "string received = " << bytesReceived << endl;
+            cout << "------------------------"<<endl;
             
             // flush: super important it clears the buffer
             // if buffer gets full you can't keep receiving values
-            kikubesSerial[con].flush();
-        } else {
-            cout << " NO  bluetooth connection";
+            kikubeList[i].kikubeSerial.flush();
+        }
+        else
+        {
+            cout << kikubeList[i].getId() << " does not have sent any bytes";
         }
     }
     
@@ -72,10 +65,9 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    for (int con = 0; con<MAX_KIKUBES; con++) {
+    for (int i = 0; i<kikubeList.size(); i++) {
         
-        kikubesSerial[con].writeByte('r');
-        
+        kikubeList[i].kikubeSerial.writeByte('r');
     }
 }
 

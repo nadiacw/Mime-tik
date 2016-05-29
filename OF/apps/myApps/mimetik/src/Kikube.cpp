@@ -8,17 +8,16 @@
 
 #include "Kikube.h"
 
-Kikube::Kikube(string id){
+Kikube::Kikube(string id, string deviceName, int tx){
     
     if(id != "") {
-        cout << "ID: ";
-        cout << id << endl;
         this->ID = id;
     } else {
         perror ("The following error occurred");
     }
     
-    
+    kikubeSerial.setup(deviceName, tx);
+    kikubeSerial.flush(); //flush the serial port once before we start
 }
 
 Kikube::~Kikube(){
