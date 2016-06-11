@@ -6,6 +6,7 @@
 //this variable is how many mesages you are sending from Arduino
 //this number should corrolate with your "bytesToSend" Array in your Ardunio Sketch
 #define NUM_MSG_BYTES 2
+#define NUM_KIKUBES 10
 
 
 class ofApp : public ofBaseApp{
@@ -30,14 +31,20 @@ class ofApp : public ofBaseApp{
     // SERIAL PART
     // Serial object
     ofSerial mySerial;
+    ofSerial kikubeSerial[NUM_KIKUBES];
+    bool bSendSerialMessage; // a flag for sending serial
+    // this will be used to count the number of frames
+    // that have passed since the last time the app reads from the serial port
+    int countCycles = 0;
 
     // we'll use this to count how many msgs have been received so far (for debugging)
     long numMsgRecvd;
     int total_devices;
     // SERIAL END
     
+    
 private:
-    vector <Kikube> kikubeList;
+    map <string, ofSerial> Kikube_hashmap;
 
 		
 };
