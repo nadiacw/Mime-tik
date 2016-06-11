@@ -72,7 +72,6 @@ void loop() {
 
     // get value from OF
     if(BT.read()) {
-      
       char value = BT.read();
       
        // change color depends on the received value
@@ -82,9 +81,8 @@ void loop() {
       // restart values 
       value = 0;
       clean();
-      
     }
-  } 
+  }
  
     
    /***************************************************
@@ -109,12 +107,14 @@ void loop() {
   */
   
   Serial.print("String to send to OF: ");
-  Serial.println(buff);
+  Serial.print(buff);
   //Send to OF the detected color
   if (Serial.available()) {
-    BT.write(buff);
-    free(buff)
+    //BT.write(buff);
+    BT.write("x");
+    free(buff);
   }
+  free(buff);
 
    /*****************************************************
   * end bluetooth set/get data
@@ -153,11 +153,12 @@ void loop() {
   currentAcc->y = mapf(ytemp, 0, 255, -1, 1);
   currentAcc->z = mapf(ztemp, 0, 255, -1, 1);
 
-  detectFace(currentAcc);
+  //detectFace(currentAcc);
 
   //currentAcc->printValues();
 
   delay(500);
+  Serial.println("");
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)

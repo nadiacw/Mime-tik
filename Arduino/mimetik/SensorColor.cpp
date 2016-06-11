@@ -40,8 +40,18 @@ void SensorColor::calculateColor(Adafruit_TCS34725 tcs)
 // detect which color is to display the states
 int SensorColor::detectColor()
 {
-  int temp_max_rgb = getMax(current_r,current_g,current_b);
+  int temp_max_rgb;
+  int totalSum = (current_r + current_g + current_b);
 
+  if(abs(current_r / totalSum - 0.33)*100 > 5)
+  {
+    temp_max_rgb = getMax(current_r,current_g,current_b);
+  }
+  else
+  {
+    return max_rgb;
+  }
+  
   if(max_rgb != temp_max_rgb && firstDetection)
   {
     firstDetection = false;
@@ -72,7 +82,6 @@ int SensorColor::detectColor()
 
 int SensorColor::getMax(float r,float g,float b)
 {
-
     if(r > g)
     {
       if(r > b)
