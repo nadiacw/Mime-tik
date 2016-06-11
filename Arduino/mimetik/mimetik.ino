@@ -11,7 +11,7 @@
 int x, y, z;
 float xm, ym, zm, temp;
 int xmin, ymin, zmin, xmax, ymax, zmax;
-
+int old_color;
 bool foundNewPossibleFace = false, firstEntry = false;
 Vector3 *possibleFace;
 
@@ -41,89 +41,107 @@ int i = 0;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
-  
+
   Serial.begin(9600);
-  
+
   // start the connection via bluetooth with tx 9600
   BT.begin(9600);
+  
 
   // LEDs setup
   pixels.begin();
-  
+
   // set acc inputs
   analogReference(EXTERNAL);  // sets the serial port to 9600
   x = analogRead(0);
   y = analogRead(1);
   z = analogRead(2);
-  currentAcc = new  Vector3(x,y,z);
+  currentAcc = new  Vector3(x, y, z);
   currentFace = new Vector3(1, 1, 0);
 
   // initialize the sensor color object
   colorSensor = new SensorColor(tcs);
+  
+  
+  old_color = -1;
 
 }
 
 void loop() {
 
-   /***************************************************
+  /***************************************************
   * Bluetooth set/get data
   */
- if (BT.available()) {
+  if (BT.available()) {
 
     // get value from OF
     //if(BT.read()) {
-      
-      char value = BT.read();
-      
-       // change color depends on the received value
-      if (value == 'r'){
-        randomColor();
-      }
-      // restart values 
-      value = 0;
-      clean();
-      
+
+    char value = BT.read();
+
+    // change color depends on the received value
+    if (value == 'r') {
+      randomColor();
+    }
+    // restart values
+    value = 0;
+    clean();
+
     //}
-  } 
- 
-    
-   /***************************************************
+  }
+
+
+  /***************************************************
   * detection color
   */
-   
+
   colorSensor->calculateColor(tcs);
   colorSensor->printResults();
   int detectedColor = colorSensor->detectColor();
-  
-  switch(detectedColor) 
+/*
+  switch (detectedColor)
   {
-    case 0: str_detectedColor = "red"; break;
-    case 1: str_detectedColor = "green"; break;
+    case 0: str_detectedColor = "redd"; break;
+    case 1: str_detectedColor = "gree"; break;
     case 2: str_detectedColor = "blue"; break;
+    default: str_detectedColor = "none"; break;
   }
-  
-  char* buff = (char*) malloc(sizeof(char)*(str_detectedColor.length() + 1)); 
-  str_detectedColor.toCharArray(buff, str_detectedColor.length() + 1); 
+ 
+  char* buff = (char*) malloc(sizeof(char) * (str_detectedColor.length() + 1));
+  str_detectedColor.toCharArray(buff, str_detectedColor.length() + 1);
+  */
   /*****************************************************
   * end detection color
   */
-  
-  Serial.print("String to send to OF: ");
-  Serial.println(buff);
-  //Send to OF the detected color
-  if (Serial.available()) {
-    BT.write(buff);
-    free(buff);
+
+  if(old_color != detectedColor) { 
+      old_color = detectedColor;
+      
+      switch (detectedColor)
+      {
+        case 0: 
+          BT.write("redd"); 
+        break;
+        case 1: 
+          BT.write("gree"); 
+        break;
+        case 2: 
+          BT.write("blue"); 
+        break;
+        default: 
+          BT.write("none"); 
+         break;
+      }
   }
 
-   /*****************************************************
+  /*****************************************************
   * end bluetooth set/get data
   */
-  
+
   /*****************************************************
   * acc analog reads
   */
-  
+
   x = analogRead(0);       // read analog input pin 0
   delay(1);
   y = analogRead(1);       // read analog input pin 1
@@ -167,9 +185,9 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void detectFace(Vector3 *currentAcc)
 {
-  if(abs(currentAcc->x - currentFace->x) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 ) 
+  if (abs(currentAcc->x - currentFace->x) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 )
   {
-    if(firstEntry)
+    if (firstEntry)
     {
       foundNewPossibleFace = true;
       possibleFace = currentAcc;
@@ -179,7 +197,7 @@ void detectFace(Vector3 *currentAcc)
     }
     else
     {
-      if(foundNewPossibleFace)
+      if (foundNewPossibleFace)
       {
         if (millis() - temp >= 1000) {
           currentFace = possibleFace;
@@ -191,9 +209,9 @@ void detectFace(Vector3 *currentAcc)
   }
   else
   {
-    foundNewPossibleFace = false; 
+    foundNewPossibleFace = false;
     Serial.println("Is not moving");
-  }  
+  }
 }
 
 // clean values
