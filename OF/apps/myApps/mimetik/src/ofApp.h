@@ -27,12 +27,14 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+        void readArduinoData(ofSerial serial);
     
     // SERIAL PART
     // Serial object
     ofSerial mySerial;
     ofSerial kikubeSerial[NUM_KIKUBES];
     bool bSendSerialMessage; // a flag for sending serial
+    int bytesReceived[NUM_MSG_BYTES];
     // this will be used to count the number of frames
     // that have passed since the last time the app reads from the serial port
     int countCycles = 0;
@@ -41,6 +43,11 @@ class ofApp : public ofBaseApp{
     long numMsgRecvd;
     int total_devices;
     // SERIAL END
+    int bytesRequired = 8;
+    unsigned char bytes[8];
+    int bytesRemaining;
+    
+    
     
     
 private:

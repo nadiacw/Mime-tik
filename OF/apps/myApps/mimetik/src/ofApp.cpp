@@ -7,9 +7,11 @@ void ofApp::setup(){
     //SERIAL SETUP
     mySerial.listDevices();
     int id = 0;
-    int serial_count = 0;
     string id_string = "";
-    bSendSerialMessage = false;
+    
+    // we want to read 8 bytes
+    bytesRemaining = bytesRequired;
+    
     vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList(); //Every port
     for (int i = 0; i < deviceList.size(); i++) {
         
@@ -37,44 +39,45 @@ void ofApp::setup(){
 void ofApp::update(){
     //SERIAL PART
     // handshake "a"
-    
-    /*typedef std::map<std::string,ofSerial>::iterator it_type;
+
+    typedef std::map<std::string,ofSerial>::iterator it_type;
     for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
     {
         
-            if (bSendSerialMessage)
+            cout << "checking if has available data: " << iterator->second.available() << endl;
+            // check for data
+            if ( iterator->second.available() > 0)
             {
-                // send a handshake to the Arduino serial
-                //iterator->second.writeByte('r');
-                // make sure there's something to write all the data to
-                unsigned char bytesReturned[NUM_MSG_BYTES];
-                memset(bytesReturned, 0, NUM_MSG_BYTES);
-                // keep reading bytes, until there's none left to read
-                while( iterator->second.readBytes(bytesReturned, NUM_MSG_BYTES) > 0){
-                    //read this byte
-                    int val_read = iterator->second.readByte();
+                // try to read - note offset into the bytes[] array, this is so
+                // that we don't overwrite the bytes we already have
+                int bytesArrayOffset = bytesRequired - bytesRemaining;
+                int result = iterator->second.readBytes( &bytes[bytesArrayOffset],bytesRemaining);
+                cout << result << endl;
                 
+                // check for error code
+                if ( result == OF_SERIAL_ERROR )
+                {
+                    // something bad happened
+                    ofLog( OF_LOG_ERROR, "unrecoverable error reading from serial" );
+                    break;
                 }
-            }
-            // wait a few cycles before asking again
-            bSendSerialMessage = false;
-            countCycles++;
-            if(countCycles == 5)
-            {
-                bSendSerialMessage = true;
-                countCycles = 0;
-            }
-            iterator->second.flush();
-       
-    }*/
+                else if ( result == OF_SERIAL_NO_DATA )
+                {
+                    // nothing was read, try again
+                    ofLog(OF_LOG_WARNING, "there is no data sent");
+                }
+                else
+                {
+                    // we read some data!
+                    bytesRemaining -= result;
+                }
+        }
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    /*for (int i = 0; i<kikubeList.size(); i++) {
-        
-        kikubeList[i].kikubeSerial.writeByte('r');
-    }*/
+
 }
 
 //--------------------------------------------------------------
@@ -88,6 +91,7 @@ void ofApp::keyPressed(int key){
     if(key == 'g')
     {
         Kikube_hashmap["Kiku_1"].writeByte('r');
+        ofBackground(0, 255, 0);
     }
 
 }
@@ -111,7 +115,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    //mySerial.writeByte('r');
+   
 }
 
 //--------------------------------------------------------------
