@@ -43,8 +43,8 @@ class ofApp : public ofBaseApp{
     long numMsgRecvd;
     int total_devices;
     // SERIAL END
-    int bytesRequired = 8;
-    unsigned char bytes[8];
+    int bytesRequired = 4;
+    unsigned char bytes[4];
     int bytesRemaining;
     
     

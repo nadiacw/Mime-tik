@@ -37,22 +37,18 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
     //SERIAL PART
-    // handshake "a"
-
     typedef std::map<std::string,ofSerial>::iterator it_type;
     for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
     {
-        
-            // check for data
-            if ( iterator->second.available() > 0)
-            {
-                cout << "available data: " << iterator->second.available() << endl;
+                /*cout << "available data: ";
                 
                 // try to read - note offset into the bytes[] array, this is so
                 // that we don't overwrite the bytes we already have
                 int bytesArrayOffset = bytesRequired - bytesRemaining;
                 int result = iterator->second.readBytes( &bytes[bytesArrayOffset],bytesRemaining);
+                
                 cout << result << endl;
                 
                 // check for error code
@@ -72,6 +68,37 @@ void ofApp::update(){
                     // we read some data!
                     bytesRemaining -= result;
                 }
+                iterator->second.flush();*/
+                bytesRemaining = 4;
+                while ( bytesRemaining > 0 )
+                {
+                    // check for data
+                    if ( iterator->second.available() > 0 )
+                    {
+                        // try to read - note offset into the bytes[] array, this is so
+                        // that we don't overwrite the bytes we already have
+                        int bytesArrayOffset = bytesRequired - bytesRemaining;
+                        int result = iterator->second.readBytes( &bytes[bytesArrayOffset],
+                                                      bytesRemaining );
+                        cout << bytes <<endl;
+                        // check for error code
+                        if ( result == OF_SERIAL_ERROR )
+                        {
+                            // something bad happened
+                            ofLog( OF_LOG_ERROR, "unrecoverable error reading from serial" );
+                            // bail out
+                            break;
+                        }
+                        else if ( result == OF_SERIAL_NO_DATA )
+                        {
+                            // nothing was read, try again
+                        }
+                        else
+                        {
+                            // we read some data!
+                            bytesRemaining -= result;
+                        }
+                    }
         }
     }
 }
