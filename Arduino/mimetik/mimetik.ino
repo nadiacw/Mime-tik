@@ -113,7 +113,7 @@ void loop() {
   //Send to OF the detected color
   if (Serial.available()) {
     BT.write(buff);
-    free(buff)
+    free(buff);
   }
 
    /*****************************************************

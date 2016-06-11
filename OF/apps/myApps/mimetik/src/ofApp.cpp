@@ -44,10 +44,11 @@ void ofApp::update(){
     for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
     {
         
-            cout << "checking if has available data: " << iterator->second.available() << endl;
             // check for data
             if ( iterator->second.available() > 0)
             {
+                cout << "available data: " << iterator->second.available() << endl;
+                
                 // try to read - note offset into the bytes[] array, this is so
                 // that we don't overwrite the bytes we already have
                 int bytesArrayOffset = bytesRequired - bytesRemaining;
