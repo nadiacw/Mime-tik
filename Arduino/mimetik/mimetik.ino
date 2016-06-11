@@ -68,10 +68,10 @@ void loop() {
    /***************************************************
   * Bluetooth set/get data
   */
- if (BT.available() > 0) {
+ if (BT.available()) {
 
     // get value from OF
-    if(BT.read()) {
+    //if(BT.read()) {
       
       char value = BT.read();
       
@@ -83,7 +83,7 @@ void loop() {
       value = 0;
       clean();
       
-    }
+    //}
   } 
  
     
@@ -157,7 +157,7 @@ void loop() {
 
   //currentAcc->printValues();
 
-  delay(500);
+  //delay(500);
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
