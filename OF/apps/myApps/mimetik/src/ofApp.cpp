@@ -4,6 +4,8 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     
+    messageIndex = 0;
+    
     //SERIAL SETUP
     mySerial.listDevices();
     int id = 0;
@@ -43,30 +45,60 @@ void ofApp::update(){
     typedef std::map<std::string,ofSerial>::iterator it_type;
     for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
     {
-        
-        if ( iterator->second.available() >= NUM_MSG_BYTES)
+        if ( iterator->second.available() > 0)
         {
+            cout << "bytes received: " << iterator->second.available() << " ";
+            bool hasFoundEndOfFile = false;
             //go through all received bytes
-            for(int i = 0; i < NUM_MSG_BYTES; i++)
+            for(int i = 0; i < (int)iterator->second.available(); i++)
             {
                 //read one byte
                 char val = iterator->second.readByte();
-                //store it in the array at index i
+
                 if(val=='#')
                 {
+                    hasFoundEndOfFile = true;
+                    messageIndex = 0;
                     break;
                 }
-                bytesReceived[i] = val;
-                
+                //store it in the array at index i
+                bytesReceived[messageIndex] = val;
+                messageIndex++;
+                cout << val;
             }
+            if(!hasFoundEndOfFile)
+            {
+                cout << "end of file not found " << bytesReceived << endl;
+                return;
+            }
+
             
             vector<string> explode_str = explode(bytesReceived,'?');
+            
+            cout << "Bytes received: " << bytesReceived << endl;
             cout << "Exploded string pos 0: " << explode_str[0] << endl;
             cout << "Exploded string pos 1: " << explode_str[1] << endl;
-            //print
-            //cout << "received from: " << iterator->first << " " << bytesReceived << endl;
-            //cout << "-------------------" << endl;
-            iterator->second.flush();
+            
+            for(int i = 0; i < explode_str.size(); i++)
+            {
+                
+                if(explode_str[i][0] == 's')
+                {
+                    cout << explode_str[i] << endl;
+                    vector<string> state_part = explode(explode_str[i], ':');
+                    cout << "Read state: " << state_part[1] << endl;
+                }
+            }
+
+            // if end of file find ( s found ) flush it
+            if(hasFoundEndOfFile) {
+                iterator->second.flush();
+                
+            }
+        } else {
+            // start again without flush
+            return;
+        
         }
     }
 }
@@ -83,6 +115,18 @@ ofSerial ofApp::setupSerial(int i, int baudrate)
 }
 
 vector<string> ofApp::explode(char mssg[], char delim)
+{
+    vector<string> result;
+    
+    istringstream iss(mssg);
+    for( string token; getline(iss,token,delim);)
+    {
+        result.push_back(move(token));
+    }
+    return result;
+}
+
+vector<string> ofApp::explode(string mssg, char delim)
 {
     vector<string> result;
     
