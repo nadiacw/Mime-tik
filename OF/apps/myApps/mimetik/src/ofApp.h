@@ -20,12 +20,16 @@ class ofApp : public ofBaseApp{
 		void keyPressed(int key);
 		void keyReleased(int key);
         void readArduinoData(ofSerial serial);
+    
         ofSerial setupSerial(int i, int baud);
         vector<string> explode(char mssg[], char delim);
+        vector<string> explode(string mssg, char delim);
+
         // Serial object
         ofSerial mySerial;
         ofSerial kikubeSerial[NUM_KIKUBES];
         char bytesReceived[NUM_MSG_BYTES];
+        int messageIndex;
     
     
 private:
