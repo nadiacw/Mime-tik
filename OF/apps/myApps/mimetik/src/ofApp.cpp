@@ -9,9 +9,6 @@ void ofApp::setup(){
     int id = 0;
     string id_string = "";
     
-    // we want to read 8 bytes
-    bytesRemaining = bytesRequired;
-    
     vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList(); //Every port
     for (int i = 0; i < deviceList.size(); i++) {
         
@@ -24,7 +21,11 @@ void ofApp::setup(){
             Kikube kik_temp = Kikube(id_string);
             
             // this is set to the port where your device is connected
-            kikubeSerial[id].setup(i, 9600);
+            if(!kikubeSerial[id].setup(i, 9600))
+            {
+                kikubeSerial[id] = setupSerial(i, 9600);
+            }
+            
             kikubeSerial[id].flush(); //flush the serial port once before we start
       
             // push new kikube into a list of kikubes
@@ -42,65 +43,55 @@ void ofApp::update(){
     typedef std::map<std::string,ofSerial>::iterator it_type;
     for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
     {
-                /*cout << "available data: ";
-                
-                // try to read - note offset into the bytes[] array, this is so
-                // that we don't overwrite the bytes we already have
-                int bytesArrayOffset = bytesRequired - bytesRemaining;
-                int result = iterator->second.readBytes( &bytes[bytesArrayOffset],bytesRemaining);
-                
-                cout << result << endl;
-                
-                // check for error code
-                if ( result == OF_SERIAL_ERROR )
+        
+        if ( iterator->second.available() >= NUM_MSG_BYTES)
+        {
+            //go through all received bytes
+            for(int i = 0; i < NUM_MSG_BYTES; i++)
+            {
+                //read one byte
+                char val = iterator->second.readByte();
+                //store it in the array at index i
+                if(val=='#')
                 {
-                    // something bad happened
-                    ofLog( OF_LOG_ERROR, "unrecoverable error reading from serial" );
                     break;
                 }
-                else if ( result == OF_SERIAL_NO_DATA )
-                {
-                    // nothing was read, try again
-                    ofLog(OF_LOG_WARNING, "there is no data sent");
-                }
-                else
-                {
-                    // we read some data!
-                    bytesRemaining -= result;
-                }
-                iterator->second.flush();*/
-                bytesRemaining = 4;
-                while ( bytesRemaining > 0 )
-                {
-                    // check for data
-                    if ( iterator->second.available() > 0 )
-                    {
-                        // try to read - note offset into the bytes[] array, this is so
-                        // that we don't overwrite the bytes we already have
-                        int bytesArrayOffset = bytesRequired - bytesRemaining;
-                        int result = iterator->second.readBytes( &bytes[bytesArrayOffset],
-                                                      bytesRemaining );
-                        cout << bytes <<endl;
-                        // check for error code
-                        if ( result == OF_SERIAL_ERROR )
-                        {
-                            // something bad happened
-                            ofLog( OF_LOG_ERROR, "unrecoverable error reading from serial" );
-                            // bail out
-                            break;
-                        }
-                        else if ( result == OF_SERIAL_NO_DATA )
-                        {
-                            // nothing was read, try again
-                        }
-                        else
-                        {
-                            // we read some data!
-                            bytesRemaining -= result;
-                        }
-                    }
+                bytesReceived[i] = val;
+                
+            }
+            
+            vector<string> explode_str = explode(bytesReceived,'?');
+            cout << "Exploded string pos 0: " << explode_str[0] << endl;
+            cout << "Exploded string pos 1: " << explode_str[1] << endl;
+            //print
+            //cout << "received from: " << iterator->first << " " << bytesReceived << endl;
+            //cout << "-------------------" << endl;
+            iterator->second.flush();
         }
     }
+}
+
+ofSerial ofApp::setupSerial(int i, int baudrate)
+{
+    ofSerial ofS;
+    cout << "Trying again to setup" << endl;
+    if(!ofS.setup(i, baudrate))
+    {
+        ofS = setupSerial(i,baudrate);
+    }
+    else{return ofS;}
+}
+
+vector<string> ofApp::explode(char mssg[], char delim)
+{
+    vector<string> result;
+    
+    istringstream iss(mssg);
+    for( string token; getline(iss,token,delim);)
+    {
+        result.push_back(move(token));
+    }
+    return result;
 }
 
 //--------------------------------------------------------------
@@ -131,47 +122,4 @@ void ofApp::keyReleased(int key){
     }
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
 
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-   
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
-}
