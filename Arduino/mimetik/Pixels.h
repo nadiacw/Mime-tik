@@ -19,7 +19,11 @@ public:
   
   void randomColor(Adafruit_NeoPixel &_pixels);
   
-  void RGBColor(Adafruit_NeoPixel &_pixels, String _color);
+  void RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blue);
+  
+  void ColorShift(Adafruit_NeoPixel &_pixels, String _kColor, float _accx);
+  
+  uint32_t Wheel(Adafruit_NeoPixel &_pixels,byte WheelPos);
 
   
 private:
