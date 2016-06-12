@@ -43,7 +43,7 @@ int SensorColor::detectColor()
   int temp_max_rgb;
   int totalSum = (current_r + current_g + current_b);
 
-  if(abs(current_r / totalSum - 0.33)*100 > 5)
+  if(abs(current_r / totalSum - 0.33)*100 > 10)
   {
     temp_max_rgb = getMax(current_r,current_g,current_b);
   }

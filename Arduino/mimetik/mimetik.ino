@@ -21,6 +21,8 @@ Vector3 *currentFace;
 SensorColor *colorSensor;
 Pixels *pixel_obj;
 
+String kikubeColor;
+
 /********* NUMBER OF PIXELS **********/
 int numPixels = 6;
 #define pixelPin 3;
@@ -51,7 +53,7 @@ void setup() {
   // Start Bluetooth connection
   BT.begin(9600);
   //handshake
-  BT.write("a");
+  //BT.write("a");
 
   // set acc inputs
   analogReference(EXTERNAL);  // sets the serial port to 9600
@@ -70,6 +72,7 @@ void setup() {
   
   
   old_color = -1;
+  kikubeColor = "none";
 
 }
 
@@ -101,7 +104,7 @@ void loop() {
   */
 
   colorSensor->calculateColor(tcs);
-  colorSensor->printResults();
+  //colorSensor->printResults();
   int detectedColor = colorSensor->detectColor();
 
   /*****************************************************
@@ -114,22 +117,27 @@ void loop() {
       switch (detectedColor)
       {
         case 0: 
-          //BT.write("redd"); 
-          pixel_obj->RGBColor(pixels, "red");
+          BT.write("s:red?"); 
+          pixel_obj->RGBColor(pixels, 255, 0, 0);
+          kikubeColor = "red";
         break;
         case 1: 
-          //BT.write("gree");
-         pixel_obj->RGBColor(pixels, "green"); 
+          BT.write("s:green?");
+         pixel_obj->RGBColor(pixels, 0, 255, 0); 
+         kikubeColor = "green";
         break;
         case 2: 
-          //BT.write("blue");
-          pixel_obj->RGBColor(pixels, "blue");
+          BT.write("s:blue?");
+          pixel_obj->RGBColor(pixels, 0, 0, 255);
+          kikubeColor = "blue";
         break;
         default: 
-          //BT.write("none"); 
+          BT.write("s:none?"); 
          break;
       }
       
+        // END OF MESSAGE
+        BT.write("#");
       
   }
 
@@ -171,16 +179,17 @@ void loop() {
   currentAcc->z = mapf(ztemp, 0, 255, -1, 1);
 
   detectFace(currentAcc);
-
-  //currentAcc->printValues();
-
-  //delay(500);
   
-  BT.write("xavi");
-  BT.write("?");
-  BT.write("guapo");
-  BT.write("#");
-  //BT.write("#");
+  // send acc data
+  String acc = "";
+  acc = (String)currentAcc->x +','+(String)currentAcc->y+','+(String)currentAcc->z;
+  //Serial.println(acc);
+  //BT.write("");
+  //currentAcc->printValues();
+  
+  
+  //pixel_obj->ColorShift(pixels,kikubeColor,currentAcc->x);
+  
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
