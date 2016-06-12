@@ -7,6 +7,7 @@
 #include <Wire.h>
 #include "Vector3.h"
 #include "SensorColor.h"
+#include "Pixels.h"
 
 int x, y, z;
 float xm, ym, zm, temp;
@@ -18,6 +19,14 @@ Vector3 *possibleFace;
 Vector3 *currentAcc;
 Vector3 *currentFace;
 SensorColor *colorSensor;
+Pixels *pixel_obj;
+
+/********* NUMBER OF PIXELS **********/
+int numPixels = 6;
+#define pixelPin 3;
+
+char values[255];
+int i = 0;
 
 
 const int xpin = A3;                  // x-axis of the accelerometer
@@ -33,23 +42,16 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 String str_detectedColor;
 
 /*************** Pixels settings ****************/
-#define LED_PIN 3
-char values[255];
-int i = 0;
-#define PIN            3
-#define NUMPIXELS      6
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
 
   Serial.begin(9600);
 
-  // start the connection via bluetooth with tx 9600
+  // Start Bluetooth connection
   BT.begin(9600);
-  
-
-  // LEDs setup
-  pixels.begin();
+  //handshake
+  BT.write("a");
 
   // set acc inputs
   analogReference(EXTERNAL);  // sets the serial port to 9600
@@ -62,13 +64,16 @@ void setup() {
   // initialize the sensor color object
   colorSensor = new SensorColor(tcs);
   
+  //initialize the led strip object
+  pixels.begin();
+  pixel_obj = new Pixels();
+  
   
   old_color = -1;
 
 }
 
 void loop() {
-
   /***************************************************
   * Bluetooth set/get data
   */
@@ -81,7 +86,7 @@ void loop() {
 
     // change color depends on the received value
     if (value == 'r') {
-      randomColor();
+      pixel_obj->randomColor(pixels);
     }
     // restart values
     value = 0;
@@ -98,18 +103,7 @@ void loop() {
   colorSensor->calculateColor(tcs);
   colorSensor->printResults();
   int detectedColor = colorSensor->detectColor();
-/*
-  switch (detectedColor)
-  {
-    case 0: str_detectedColor = "redd"; break;
-    case 1: str_detectedColor = "gree"; break;
-    case 2: str_detectedColor = "blue"; break;
-    default: str_detectedColor = "none"; break;
-  }
- 
-  char* buff = (char*) malloc(sizeof(char) * (str_detectedColor.length() + 1));
-  str_detectedColor.toCharArray(buff, str_detectedColor.length() + 1);
-  */
+
   /*****************************************************
   * end detection color
   */
@@ -120,18 +114,23 @@ void loop() {
       switch (detectedColor)
       {
         case 0: 
-          BT.write("redd"); 
+          //BT.write("redd"); 
+          pixel_obj->RGBColor(pixels, "red");
         break;
         case 1: 
-          BT.write("gree"); 
+          //BT.write("gree");
+         pixel_obj->RGBColor(pixels, "green"); 
         break;
         case 2: 
-          BT.write("blue"); 
+          //BT.write("blue");
+          pixel_obj->RGBColor(pixels, "blue");
         break;
         default: 
-          BT.write("none"); 
+          //BT.write("none"); 
          break;
       }
+      
+      
   }
 
   /*****************************************************
@@ -176,6 +175,12 @@ void loop() {
   //currentAcc->printValues();
 
   //delay(500);
+  
+  BT.write("xavi");
+  BT.write("?");
+  BT.write("guapo");
+  BT.write("#");
+  //BT.write("#");
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
@@ -224,15 +229,5 @@ void clean()
   i = 0;
 }
 
-// set random color to send
-void randomColor()
-{
-  int red = random(0, 255);
-  int green = random(0, 255);
-  int blue = random(0, 255);
-  for (int i = 0; i < NUMPIXELS; i++) {
-    pixels.setPixelColor(i, pixels.Color(red, green, blue));
-    pixels.show();
-  }
-}
+
 
