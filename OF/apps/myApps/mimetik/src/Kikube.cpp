@@ -11,10 +11,16 @@
 Kikube::Kikube(string id){
     
     if(id != "") {
+        
         this->ID = id;
+        
+        // initialize the state of these kikube
+        this->kikube_state = *new States();
+        
     } else {
         perror ("The following error occurred");
     }
+    
 
 }
 
@@ -30,14 +36,5 @@ string Kikube::getId() {
     
 }
 
-// get future color of the kikube
-string Kikube::getColor() {
-    
-}
-
-// get direction of the kikube state
-string Kikube::getDirection() {
-    
-}
 
     

@@ -28,12 +28,14 @@ class ofApp : public ofBaseApp{
         // Serial object
         ofSerial mySerial;
         ofSerial kikubeSerial[NUM_KIKUBES];
-        char bytesReceived[NUM_MSG_BYTES];
         int messageIndex;
+        char bytesReceived[NUM_MSG_BYTES];
+        unsigned char send[5];
     
     
 private:
-    map <string, ofSerial> Kikube_hashmap;
+    map <string, ofSerial> Kikube_serial_hashmap;
+    map <string, Kikube> Kikube_hashmap;
 
 		
 };

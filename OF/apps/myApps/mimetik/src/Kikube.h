@@ -8,15 +8,15 @@
 #pragma once
 
 #include "ofMain.h"
+#include "States.h"
 
 class Kikube
 {
 public:
-    Kikube(string id);
+    Kikube(string const id = "0");
     ~Kikube();
     string getId();
-    string getColor();
-    string getDirection();   
+    States kikube_state;
     
     
 private:

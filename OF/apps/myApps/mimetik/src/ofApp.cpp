@@ -7,7 +7,7 @@ void ofApp::setup(){
     messageIndex = 0;
     
     //SERIAL SETUP
-    mySerial.listDevices();
+    //mySerial.listDevices();
     int id = 0;
     string id_string = "";
     
@@ -19,8 +19,12 @@ void ofApp::setup(){
             // creates the id about kikube
             id_string = "Kiku_"+to_string(id);
             cout << id_string << endl;
+            
             // new kikube
             Kikube kik_temp = Kikube(id_string);
+            
+            // push new kikube into a list of kikubes
+            Kikube_hashmap[id_string] = kik_temp;
             
             // this is set to the port where your device is connected
             if(!kikubeSerial[id].setup(i, 9600))
@@ -30,8 +34,9 @@ void ofApp::setup(){
             
             kikubeSerial[id].flush(); //flush the serial port once before we start
       
-            // push new kikube into a list of kikubes
-            Kikube_hashmap[id_string] = kikubeSerial[id];
+            // push new kikube serial into a list of kikubes serials
+            Kikube_serial_hashmap[id_string] = kikubeSerial[id];
+            
             
             id++;
         }
@@ -40,14 +45,15 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    
+    int i = 0;
     //SERIAL PART
-    typedef std::map<std::string,ofSerial>::iterator it_type;
-    for(it_type iterator = Kikube_hashmap.begin(); iterator != Kikube_hashmap.end(); iterator++)
+
+    map<string,ofSerial>::iterator iterator = Kikube_serial_hashmap.begin();
+    
+    for(; iterator != Kikube_serial_hashmap.end(); iterator++)
     {
         if ( iterator->second.available() > 0)
-        {
-            cout << "bytes received: " << iterator->second.available() << " ";
+        {            
             bool hasFoundEndOfFile = false;
             //go through all received bytes
             for(int i = 0; i < (int)iterator->second.available(); i++)
@@ -64,29 +70,34 @@ void ofApp::update(){
                 //store it in the array at index i
                 bytesReceived[messageIndex] = val;
                 messageIndex++;
-                cout << val;
+                //cout << val;
             }
             if(!hasFoundEndOfFile)
             {
-                cout << "end of file not found " << bytesReceived << endl;
+                //cout << " end of file not found " << bytesReceived << endl;
                 return;
             }
 
-            
             vector<string> explode_str = explode(bytesReceived,'?');
-            
-            cout << "Bytes received: " << bytesReceived << endl;
-            cout << "Exploded string pos 0: " << explode_str[0] << endl;
-            cout << "Exploded string pos 1: " << explode_str[1] << endl;
-            
             for(int i = 0; i < explode_str.size(); i++)
             {
                 
                 if(explode_str[i][0] == 's')
                 {
-                    cout << explode_str[i] << endl;
+              
                     vector<string> state_part = explode(explode_str[i], ':');
-                    cout << "Read state: " << state_part[1] << endl;
+                    
+                    
+                    // Define the new state at State class
+                    cout << iterator->first << " ";
+                    Kikube_hashmap[iterator->first].kikube_state.setState(state_part[1]);
+                   
+                    for ( int j = 0; j< Kikube_hashmap[iterator->first].kikube_state.direction.size(); j++) {
+                        send[j] = Kikube_hashmap[iterator->first].kikube_state.direction[j];
+                    }
+                    cout << "Send char: " << send << endl;
+                   
+                    Kikube_serial_hashmap[iterator->first].writeBytes(send,5);
                 }
             }
 
@@ -97,10 +108,13 @@ void ofApp::update(){
             }
         } else {
             // start again without flush
-            return;
+            continue;
         
         }
+        i++;
+        
     }
+    
 }
 
 ofSerial ofApp::setupSerial(int i, int baudrate)
@@ -146,14 +160,14 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     if(key == 'r'){
-        Kikube_hashmap["Kiku_0"].writeByte('r');
+        Kikube_serial_hashmap["Kiku_0"].writeByte('r');
         //ofBackground(ofRandom(255),ofRandom(255),ofRandom(255));
         ofBackground(255, 0, 0);
     }
     
     if(key == 'g')
     {
-        Kikube_hashmap["Kiku_1"].writeByte('r');
+        Kikube_serial_hashmap["Kiku_1"].writeByte('r');
         ofBackground(0, 255, 0);
     }
 
