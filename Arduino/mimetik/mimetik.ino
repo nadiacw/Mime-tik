@@ -8,6 +8,7 @@
 #include "Vector3.h"
 #include "SensorColor.h"
 #include "Pixels.h"
+#include "States.h"
 
 int x, y, z;
 float xm, ym, zm, temp;
@@ -15,19 +16,23 @@ int xmin, ymin, zmin, xmax, ymax, zmax;
 int old_color;
 bool foundNewPossibleFace = false, firstEntry = false;
 Vector3 *possibleFace;
+bool isMoving = false;
 
 Vector3 *currentAcc;
 Vector3 *currentFace;
+Vector3 *RGBvalues;
 SensorColor *colorSensor;
 Pixels *pixel_obj;
+States *stateObj;
 
-String kikubeColor;
+char values[255];
+
+String kikubeColor, kikubeState;
 
 /********* NUMBER OF PIXELS **********/
 int numPixels = 6;
 #define pixelPin 3;
 
-char values[255];
 int i = 0;
 
 
@@ -49,7 +54,6 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 void setup() {
 
   Serial.begin(9600);
-
   // Start Bluetooth connection
   BT.begin(9600);
   //handshake
@@ -65,98 +69,111 @@ void setup() {
 
   // initialize the sensor color object
   colorSensor = new SensorColor(tcs);
-  
+
   //initialize the led strip object
   pixels.begin();
   pixel_obj = new Pixels();
-  
-  
+
   old_color = -1;
   kikubeColor = "none";
-
+  kikubeState = "sleep";
+  stateObj = new States();
 }
 
 void loop() {
-  /***************************************************
-  * Bluetooth set/get data
-  */
-  if (BT.available()) {
-
-    // get value from OF
-    //if(BT.read()) {
-
-    char value = BT.read();
-
-    // change color depends on the received value
-    if (value == 'r') {
-      pixel_obj->randomColor(pixels);
-    }
-    // restart values
-    value = 0;
-    clean();
-
-    //}
-  }
-
-
-  /***************************************************
-  * detection color
-  */
-
-  colorSensor->calculateColor(tcs);
-  //colorSensor->printResults();
+  /**********************detection color***************/
+  colorSensor->calculateColor(tcs);  //colorSensor->printResults();
   int detectedColor = colorSensor->detectColor();
+  /******************end detection color****************/
 
-  /*****************************************************
-  * end detection color
-  */
+  if (old_color != detectedColor) {
+    old_color = detectedColor;
 
-  if(old_color != detectedColor) { 
-      old_color = detectedColor;
-      
-      switch (detectedColor)
-      {
-        case 0: 
-          BT.write("s:red?"); 
-          pixel_obj->RGBColor(pixels, 255, 0, 0);
-          kikubeColor = "red";
+    switch (detectedColor)
+    {
+      case 0:
+        BT.write("s:red?");
+        //pixel_obj->RGBColor(pixels, 255, 0, 0);
+        RGBvalues = new Vector3(255,0,0);
+        kikubeColor = "red";
         break;
-        case 1: 
-          BT.write("s:green?");
-         pixel_obj->RGBColor(pixels, 0, 255, 0); 
-         kikubeColor = "green";
+      case 1:
+        BT.write("s:green?");
+        //pixel_obj->RGBColor(pixels, 0, 255, 0);
+        RGBvalues = new Vector3(0,255,0);
+        kikubeColor = "green";
         break;
-        case 2: 
-          BT.write("s:blue?");
-          pixel_obj->RGBColor(pixels, 0, 0, 255);
-          kikubeColor = "blue";
+      case 2:
+        BT.write("s:blue?");
+        //pixel_obj->RGBColor(pixels, 0, 0, 255);
+        RGBvalues = new Vector3(0,0,255);
+        kikubeColor = "blue";
         break;
-        default: 
-          BT.write("s:none?"); 
-         break;
-      }
-      
-        // END OF MESSAGE
-        BT.write("#");
-      
+      default:
+        BT.write("s:none?");
+        break;
+    }
+    
+    if(stateObj->current_state=="sleep") {
+      stateObj->current_state = kikubeColor;
+      stateObj->ableToChangeColor = true;
+    }
+    
+    // END OF MESSAGE
+    BT.write("#");
+  }
+  /**********************end bluetooth set/get data******************/
+
+
+  /*********************Bluetooth set/get data**********************/
+  if (BT.available()) {
+    // get value from OF
+    char value = BT.read();
+    if (value != '#')
+    {
+      values[i++] = value;
+    }
+
+    if (value == '#')
+    {
+      stateObj->previousMillis = millis();
+      stateObj->stateDirection = values;
+      //stateObj->setNextState();
+      stateObj->next_state = kikubeColor;
+      // restart values
+      clean();
+    }
   }
 
+  if(stateObj->next_state != "")
+  {
+    Serial.print("Current state: ");  Serial.println(stateObj->current_state);
+    Serial.print("transition to: ");  Serial.println(stateObj->next_state);
+    stateObj->beginStateTransition();  
+    //stateObj->current_state = stateObj->next_state;
+  }
+  if(stateObj->ableToChangeColor) {
+    Serial.print("RGB values");
+    Serial.print(RGBvalues->x);Serial.print(", ");
+    Serial.print(RGBvalues->y);Serial.print(", ");
+    Serial.print(RGBvalues->z);Serial.println(" ");
+    pixel_obj->RGBColor(pixels,RGBvalues->x, RGBvalues->y, RGBvalues->z);
+    stateObj->ableToChangeColor = false;
+  }
   /*****************************************************
-  * end bluetooth set/get data
+    end direction set/get data
   */
 
-  /*****************************************************
-  * acc analog reads
-  */
 
+  /*****************************************************
+    acc analog reads
+  */
   x = analogRead(0);       // read analog input pin 0
   delay(1);
   y = analogRead(1);       // read analog input pin 1
   delay(1);
   z = analogRead(2);       // read analog input pin 2
   delay(1);
-
-
 
   //zero_G is the reading we expect from the sensor when it detects
   //no acceleration.  Subtract this value from the sensor reading to
@@ -179,17 +196,18 @@ void loop() {
   currentAcc->z = mapf(ztemp, 0, 255, -1, 1);
 
   detectFace(currentAcc);
-  
+
   // send acc data
   String acc = "";
-  acc = (String)currentAcc->x +','+(String)currentAcc->y+','+(String)currentAcc->z;
+  acc = (String)currentAcc->x + ',' + (String)currentAcc->y + ',' + (String)currentAcc->z;
   //Serial.println(acc);
   //BT.write("");
   //currentAcc->printValues();
-  
-  
-  //pixel_obj->ColorShift(pixels,kikubeColor,currentAcc->x);
-  
+
+  // Modulate leds based on acc data
+  //Serial.print(kikubeColor);
+  //pixel_obj->ColorShift(pixels, kikubeColor, currentAcc->x);
+
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
@@ -197,17 +215,18 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void detectFace(Vector3 *currentAcc)
+void detectFace(Vector3 * currentAcc)
 {
   if (abs(currentAcc->x - currentFace->x) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 )
   {
+    isMoving = false;
     if (firstEntry)
     {
       foundNewPossibleFace = true;
       possibleFace = currentAcc;
       temp = millis();
       firstEntry = false;
-      Serial.print("Has detected possible face: ");
+      //Serial.print("Has detected possible face: ");
     }
     else
     {
@@ -216,7 +235,7 @@ void detectFace(Vector3 *currentAcc)
         if (millis() - temp >= 1000) {
           currentFace = possibleFace;
           firstEntry = true;
-          Serial.println("Has updated face");
+          //Serial.println("Has updated face");
         }
       }
     }
@@ -224,7 +243,8 @@ void detectFace(Vector3 *currentAcc)
   else
   {
     foundNewPossibleFace = false;
-    Serial.println("Is not moving");
+    //Serial.println("Is not moving");
+    isMoving = true;
   }
 }
 
@@ -237,6 +257,3 @@ void clean()
   }
   i = 0;
 }
-
-
-

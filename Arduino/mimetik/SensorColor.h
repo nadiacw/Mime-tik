@@ -14,6 +14,7 @@ public:
   void calculateColor(Adafruit_TCS34725 tcs);
   int getMax(float r,float g,float b);
   void printResults();
+  bool firstDetection = true;
 private:
   
   float current_r;
@@ -24,7 +25,7 @@ private:
   float detected_b;
   int max_rgb=-1;
 
-  bool firstDetection = true;
+  
   float timer = 0;
 };
 
