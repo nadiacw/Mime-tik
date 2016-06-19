@@ -30,7 +30,7 @@ class ofApp : public ofBaseApp{
         ofSerial kikubeSerial[NUM_KIKUBES];
         int messageIndex;
         char bytesReceived[NUM_MSG_BYTES];
-        unsigned char send[5];
+       
     
     
 private:

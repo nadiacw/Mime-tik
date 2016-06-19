@@ -42,31 +42,31 @@ void States::defineDirection(string previous_state, string actual_state) {
     
     if(previous_state == "red" && actual_state == "blue") {
         
-        this->direction = "right";
+        this->direction = "right#";
         
     } else if (previous_state == "blue" && actual_state == "red") {
         
-        this->direction = "left";
+        this->direction = "left#";
         
     }else if(previous_state == "red" && actual_state == "green") {
         
-        this->direction = "left";
+        this->direction = "left#";
         
     }else if(previous_state == "green" && actual_state == "red") {
         
-        this->direction = "right";
+        this->direction = "right#";
         
     }else if(previous_state == "green" && actual_state == "blue") {
         
-        this->direction = "left";
+        this->direction = "left#";
         
     }else if(previous_state == "blue" && actual_state == "green") {
         
-        this->direction = "right";
+        this->direction = "right#";
         
     } else if(previous_state == "sleep" || actual_state == "sleep") {
         
-        this->direction = "";
+        this->direction = "#";
     
     } else {
         

@@ -91,13 +91,15 @@ void ofApp::update(){
                     // Define the new state at State class
                     cout << iterator->first << " ";
                     Kikube_hashmap[iterator->first].kikube_state.setState(state_part[1]);
-                   
+                    
+                    //reinit the send char array
+                    unsigned char send[7];
                     for ( int j = 0; j< Kikube_hashmap[iterator->first].kikube_state.direction.size(); j++) {
                         send[j] = Kikube_hashmap[iterator->first].kikube_state.direction[j];
                     }
                     cout << "Send char: " << send << endl;
                    
-                    Kikube_serial_hashmap[iterator->first].writeBytes(send,5);
+                    Kikube_serial_hashmap[iterator->first].writeBytes(send,Kikube_hashmap[iterator->first].kikube_state.direction.size());
                 }
             }
 
@@ -160,7 +162,9 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     if(key == 'r'){
-        Kikube_serial_hashmap["Kiku_0"].writeByte('r');
+        unsigned char rand[6] = "rand#";
+        Kikube_serial_hashmap["Kiku_0"].writeBytes(rand,4);
+        cout << "keyboard: " << rand << endl;
         //ofBackground(ofRandom(255),ofRandom(255),ofRandom(255));
         ofBackground(255, 0, 0);
     }
