@@ -94,31 +94,45 @@ void loop() {
       case 0:
         BT.write("s:red?");
         //pixel_obj->RGBColor(pixels, 255, 0, 0);
-        RGBvalues = new Vector3(255,0,0);
+        RGBvalues = new Vector3(255, 0, 0);
         kikubeColor = "red";
+        stateObj->next_state = kikubeColor;
+        stateObj->previousMillis = millis();
         break;
       case 1:
         BT.write("s:green?");
         //pixel_obj->RGBColor(pixels, 0, 255, 0);
-        RGBvalues = new Vector3(0,255,0);
+        RGBvalues = new Vector3(0, 255, 0);
         kikubeColor = "green";
+        stateObj->previousMillis = millis();
+        stateObj->next_state = kikubeColor;
         break;
       case 2:
         BT.write("s:blue?");
         //pixel_obj->RGBColor(pixels, 0, 0, 255);
-        RGBvalues = new Vector3(0,0,255);
+        RGBvalues = new Vector3(0, 0, 255);
         kikubeColor = "blue";
+        stateObj->previousMillis = millis();
+        stateObj->next_state = kikubeColor;
         break;
       default:
         BT.write("s:none?");
         break;
     }
-    
-    if(stateObj->current_state=="sleep") {
+
+    if (stateObj->current_state == "sleep") {
       stateObj->current_state = kikubeColor;
-      stateObj->ableToChangeColor = true;
+      stateObj->normalColorMode = true;
     }
-    
+
+    /*if (stateObj->ableToChangeColor)
+      {
+      stateObj->previousMillis = millis();
+      stateObj->stateDirection = values;
+      //stateObj->setNextState();
+      stateObj->next_state = kikubeColor;
+      }*/
+
     // END OF MESSAGE
     BT.write("#");
   }
@@ -136,29 +150,24 @@ void loop() {
 
     if (value == '#')
     {
-      stateObj->previousMillis = millis();
-      stateObj->stateDirection = values;
-      //stateObj->setNextState();
-      stateObj->next_state = kikubeColor;
-      // restart values
       clean();
     }
   }
 
-  if(stateObj->next_state != "")
+  if (stateObj->next_state != "")
   {
     Serial.print("Current state: ");  Serial.println(stateObj->current_state);
     Serial.print("transition to: ");  Serial.println(stateObj->next_state);
-    stateObj->beginStateTransition();  
+
+    stateObj->beginStateTransition();
+
     //stateObj->current_state = stateObj->next_state;
   }
-  if(stateObj->ableToChangeColor) {
-    Serial.print("RGB values");
-    Serial.print(RGBvalues->x);Serial.print(", ");
-    Serial.print(RGBvalues->y);Serial.print(", ");
-    Serial.print(RGBvalues->z);Serial.println(" ");
-    pixel_obj->RGBColor(pixels,RGBvalues->x, RGBvalues->y, RGBvalues->z);
-    stateObj->ableToChangeColor = false;
+  
+  //****************KIKUBE IN MODE OF TRANSITION OF COLOR********************
+  if(stateObj->doingTransition)
+  {
+        pixel_obj->RGBColor(pixels, 210, 0, 127);
   }
   /*****************************************************
     end direction set/get data
@@ -206,7 +215,16 @@ void loop() {
 
   // Modulate leds based on acc data
   //Serial.print(kikubeColor);
-  //pixel_obj->ColorShift(pixels, kikubeColor, currentAcc->x);
+
+  if (stateObj->normalColorMode) {
+    Serial.print("RGB values");
+    Serial.print(RGBvalues->x); Serial.print(", ");
+    Serial.print(RGBvalues->y); Serial.print(", ");
+    Serial.print(RGBvalues->z); Serial.println(" ");
+    pixel_obj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
+    //pixel_obj->ColorShift(pixels, kikubeColor, currentAcc->x);
+    stateObj->doingTransition = false;
+  }
 
 }
 

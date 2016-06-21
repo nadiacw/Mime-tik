@@ -23,11 +23,12 @@ class States {
         String stateDirection;
         String next_state;
         unsigned long previousMillis;
-        bool ableToChangeColor = false;
+        bool normalColorMode = false;
+        bool doingTransition = false;
 
     
     private:
-      const long interval = 10000;
+      const long interval = 1000;
 
     
 };

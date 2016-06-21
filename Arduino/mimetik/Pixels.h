@@ -12,7 +12,7 @@ public:
   ~Pixels();
 
   #define PIN            3
-  #define NUMPIXELS      6
+  #define NUMPIXELS      40
 
   //Adafruit_NeoPixel pixels;
 
