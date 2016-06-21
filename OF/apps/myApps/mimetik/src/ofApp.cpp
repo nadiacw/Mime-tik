@@ -7,10 +7,10 @@ void ofApp::setup(){
     messageIndex = 0;
     
     //SERIAL SETUP
-    //mySerial.listDevices();
+    mySerial.listDevices();
     int id = 0;
     string id_string = "";
-    
+ 
     vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList(); //Every port
     for (int i = 0; i < deviceList.size(); i++) {
         
@@ -27,9 +27,9 @@ void ofApp::setup(){
             Kikube_hashmap[id_string] = kik_temp;
             
             // this is set to the port where your device is connected
-            if(!kikubeSerial[id].setup(i, 9600))
+            while(!kikubeSerial[id].setup(i, 9600))
             {
-                kikubeSerial[id] = setupSerial(i, 9600);
+                kikubeSerial[id].setup(i, 9600);
             }
             
             kikubeSerial[id].flush(); //flush the serial port once before we start
@@ -124,7 +124,7 @@ ofSerial ofApp::setupSerial(int i, int baudrate)
     ofSerial ofS;
     cout << "Trying again to setup" << endl;
     if(!ofS.setup(i, baudrate))
-    {
+    {   ofS.flush();
         ofS = setupSerial(i,baudrate);
     }
     else{return ofS;}
