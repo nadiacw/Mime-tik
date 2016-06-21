@@ -71,7 +71,7 @@ int SensorColor::detectColor()
   }
   else
   {
-    Serial.print("Colors are equal");
+    //Serial.print("Colors are equal");
     firstDetection = true;
     timer = 0;
   }
