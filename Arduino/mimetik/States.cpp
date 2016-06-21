@@ -55,9 +55,15 @@ void States::beginStateTransition()
     if (millis() - previousMillis >= interval) {
       this->current_state = this->next_state;
       this->next_state = "";
-      this->ableToChangeColor = true;
+      this->normalColorMode = true;
+      doingTransition = false;
       Serial.println("Set up next state value");
-  }
+    }
+    else
+    {
+      normalColorMode = false;
+      doingTransition = true;
+    }
 }
 
 
