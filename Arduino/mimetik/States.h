@@ -28,7 +28,7 @@ class States {
 
     
     private:
-      const long interval = 1000;
+      const long interval = 3000;
 
     
 };

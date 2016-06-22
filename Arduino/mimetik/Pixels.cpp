@@ -1,12 +1,14 @@
 #include "Pixels.h"
 #include "Arduino.h"
+
 //#include <Adafruit_NeoPixel.h>
 
 
 Pixels::Pixels()
 {
-  previousMillis = 0;
-  //interval = 1000;
+  Index = 0;
+  Interval = 1;
+  TotalSteps = 255;
 }
 
 Pixels::~Pixels()
@@ -35,29 +37,54 @@ void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blu
 
 }
 
+void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, String _newColor, String _oldColor)
+{
+  Vector3 color_new = returnColorValues(_pixels, _newColor);
+  Vector3 color_old = returnColorValues(_pixels, _oldColor);
+  while (Index <= 1) {
+  
+    
+    uint32_t r = color_old.x*(1-Index) + color_new.x*Index;
+    uint32_t g = color_old.y*(1-Index) + color_new.y*Index;
+    uint32_t b = color_old.z*(1-Index) + color_new.z*Index;
+  
+    uint32_t color_mix = _pixels.Color(r,g,b);
+    
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+        _pixels.setPixelColor(i, color_mix);
+        _pixels.show();
+     }
+     
+     Index = Index + 0.008;
+  
+  }
+  Index = 0;
+
+}
+
+Vector3 Pixels::returnColorValues(Adafruit_NeoPixel &_pixels, String _color) {
+  if (_color == "red") {
+    return Vector3(255, 0, 0);
+  }
+  else if  (_color == "green") {
+    return Vector3(0, 255, 0);
+  }
+  else if  (_color == "blue") {
+   return Vector3(0, 0, 255);
+  }
+}
+
 void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, String _kColor, float _accx) {
 
   //Serial.print(_accx);
   if (_kColor == "blue") {
-    uint16_t i = 0;
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-      previousMillis = currentMillis;
-
-        for (i = 0; i < _pixels.numPixels(); i++) {
-          _pixels.setPixelColor(i, Wheel(_pixels, ((i * 256 / _pixels.numPixels()) + pixItj) & 255));
-        }
-        _pixels.show();
-
-      if(pixItj < 256 * 5)
-      {
-        pixItj++;
-      }
-      else
-      {
-        pixItj = 0;
-      }
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      //_pixels.setPixelColor(i, Wheel(_pixels, ((i * 256 / NUMPIXELS) + Index) & 255));
     }
+    _pixels.show();
+    Index++;
   }
   else if (_kColor == "red") {
     for (int i = 0; i < NUMPIXELS; i++) {
@@ -73,6 +100,10 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, String _kColor, float _accx)
   }
 }
 
+void Pixels::Increment()
+{
+  Index++;
+}
 
 
 

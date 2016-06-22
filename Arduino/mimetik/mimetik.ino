@@ -167,7 +167,8 @@ void loop() {
   //****************KIKUBE IN MODE OF TRANSITION OF COLOR********************
   if(stateObj->doingTransition)
   {
-        pixel_obj->RGBColor(pixels, 210, 0, 127);
+        //pixel_obj->RGBColor(pixels, 210, 0, 127);
+        pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state);
   }
   /*****************************************************
     end direction set/get data
