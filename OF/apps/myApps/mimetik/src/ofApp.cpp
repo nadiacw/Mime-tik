@@ -41,6 +41,17 @@ void ofApp::setup(){
             id++;
         }
     }
+
+	//********************ABLETON***************************
+	// can connect to AbletonLive in localhost (same machine) or over the network if an IP address given.
+	// additionally provide an event listener for when live has been setup
+	live.setup("localhost", this, &ofApp::setupAbletonGui);
+
+	// it takes a couple of seconds to parse all the OSC data and build the gui.
+	// wait a few seconds before calling any of the getter functions for it to populate the data
+
+	elapsedTime = 0;
+	sumTime = false;
 }
 
 //--------------------------------------------------------------
@@ -117,6 +128,26 @@ void ofApp::update(){
         
     }
     
+
+	//***************ABLETON*****************
+	// don't forget to run this! otherwise no OSC messages received
+	live.update();
+
+	if (sumTime)
+	{
+		elapsedTime += ofGetElapsedTimef();
+		if (elapsedTime < endTime)
+		{
+			timeNorm = ofMap(elapsedTime, 0, 5, 0, 1);
+		}
+	}
+
+	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
+	float currentTime = ofGetElapsedTimef();
+	for (; it != live.getTracks().end(); it++)
+	{
+		it->second->Update(currentTime);
+	}
 }
 
 ofSerial ofApp::setupSerial(int i, int baudrate)
@@ -175,6 +206,20 @@ void ofApp::keyPressed(int key){
         ofBackground(0, 255, 0);
     }
 
+	if (key == 'd') {
+		map<int, ofxAbletonLiveTrack*>::iterator it = std::next(live.getTracks().begin(), 1);
+		it->second->initTime = ofGetElapsedTimef();
+		it->second->setFadeOut(ofGetElapsedTimef() + 10);
+		cout << "fading out" << endl;
+	}
+
+	if (key == 'u') {
+		map<int, ofxAbletonLiveTrack*>::iterator it = std::next(live.getTracks().begin(), 1);
+		it->second->initTime = ofGetElapsedTimef();
+		it->second->setFadeIn(ofGetElapsedTimef() + 5);
+		cout << "fading in" << endl;
+	}
+
 }
 
 //--------------------------------------------------------------
@@ -184,4 +229,12 @@ void ofApp::keyReleased(int key){
     }
 }
 
+//--------------------------------------------------------------
+void ofApp::setupAbletonGui()
+{
+	// setupAbletonGui() was passed to the live setup method and will
+	// automatically be called when live has finished parsing. at that
+	// point we can generate a gui
+	gui.setup(&live);
+}
 

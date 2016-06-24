@@ -3,6 +3,9 @@
 #include "ofMain.h"
 #include "Kikube.h"
 //#include "Utils.h"
+#include "ofxGui.h"
+#include "ofxAbletonLive.h"
+#include "AbletonGui.h"
 
 //this variable is how many mesages you are sending from Arduino
 //this number should corrolate with your "bytesToSend" Array in your Ardunio Sketch
@@ -30,6 +33,18 @@ class ofApp : public ofBaseApp{
         ofSerial kikubeSerial[NUM_KIKUBES];
         int messageIndex;
         char bytesReceived[NUM_MSG_BYTES];
+
+		//ABLETON
+		ofxAbletonLive live;
+		AbletonGui gui;
+		int initTime;
+		int endTime;
+		int elapsedTime;
+		bool sumTime;
+		float timeNorm;
+
+		void setupAbletonGui();
+		void setTrackToKikube(string state);
        
     
     
