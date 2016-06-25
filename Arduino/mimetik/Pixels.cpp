@@ -33,8 +33,12 @@ void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blu
   }
 }
 
-void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans)
-{
+void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans, float _accx, float _accy, float _accz, const long _interval) {
+  T = _interval / (_interval * repetitions);
+  freq = 1.0 / T;
+  float brightness = mapfloat(sin((timeTrans + 0.25 * T) * 3.14 * 2 * freq ), -1, 1, 50, 255);
+  _pixels.setBrightness(brightness);
+
   Vector3 color_new = Vector3(0, 0, 0);
   Vector3 color_old = Vector3(0, 0, 0);
   //color_new = returnColorValues(_newColor);
@@ -65,14 +69,38 @@ void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _
   }
   else {
     Serial.println("MU MAAAL");
-    //color_old.printValues();
   }
 
+  if (_newColor == 'r') {
+    //get tint
+    r_tint = map(_accx, 0, 10, 220, 255); g_tint = map(_accy, 0, 10, 0, 30); b_tint = map(_accz, 0, 10, 0, 30);
+  }
+  else if (_newColor == 'g') {
+    r_tint = map(_accy, 0, 10, 0, 50); g_tint = map(_accx, 0, 10, 220, 255); b_tint = map(_accz, 0, 10, 50, 0);
+  }
+  else if (_newColor == 'b') {
+    r_tint = map(_accz, 0, 10, 0, 50); g_tint = map(_accy, 0, 10, 0, 50); b_tint = map(_accx, 0, 10, 220, 255);
+  }
+
+  if (_oldColor == 'r') {
+    //get tint
+    r_tint2 = map(_accx, 0, 10, 220, 255); g_tint2 = map(_accy, 0, 10, 0, 30); b_tint2 = map(_accz, 0, 10, 0, 30);
+  }
+  else if (_oldColor == 'g') {
+    r_tint2 = map(_accy, 0, 10, 0, 50); g_tint2 = map(_accx, 0, 10, 220, 255); b_tint2 = map(_accz, 0, 10, 50, 0);
+  }
+  else if (_oldColor == 'b') {
+    r_tint2 = map(_accz, 0, 10, 0, 50); g_tint2 = map(_accy, 0, 10, 0, 50); b_tint2 = map(_accx, 0, 10, 220, 255);
+  }
 
   if (timeTrans <= 1) {
-    r = color_old.x * (1 - timeTrans) + color_new.x * timeTrans;
-    g = color_old.y * (1 - timeTrans) + color_new.y * timeTrans;
-    b = color_old.z * (1 - timeTrans) + color_new.z * timeTrans;
+    r = color_old.x * (1 - timeTrans) + color_new.x * timeTrans + (r_tint * (timeTrans) + r_tint2 * (1 - timeTrans));
+    g = color_old.y * (1 - timeTrans) + color_new.y * timeTrans + (g_tint * (timeTrans) + g_tint2 * (1 - timeTrans));
+    b = color_old.z * (1 - timeTrans) + color_new.z * timeTrans + (b_tint * (timeTrans) + b_tint2 * (1 - timeTrans));
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+
     color_mix = _pixels.Color(r, g, b);
 
     for (int i = 0; i < NUMPIXELS; i++ ) {
@@ -140,19 +168,19 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, f
   }
 
   else if (_kColor == 'g') {
-    r_tint = map(_accx, 0, 10, 0, 50);
-    g_tint = map(_accy, 0, 10, 220, 255);
+    r_tint = map(_accy, 0, 10, 0, 50);
+    g_tint = map(_accx, 0, 10, 220, 255);
     b_tint = map(_accz, 0, 10, 50, 0);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
       _pixels.show();
     }
   }
-  
+
   else if (_kColor == 'b') {
-    r_tint = map(_accx, 0, 10, 0, 50);
+    r_tint = map(_accz, 0, 10, 0, 50);
     g_tint = map(_accy, 0, 10, 0, 50);
-    b_tint = map(_accz, 0, 10, 220, 255);
+    b_tint = map(_accx, 0, 10, 220, 255);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
       _pixels.show();
@@ -171,4 +199,9 @@ uint32_t Pixels::Wheel(Adafruit_NeoPixel &_pixels, byte WheelPos) {
     WheelPos -= 170;
     return _pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
   }
+}
+
+float Pixels::mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
