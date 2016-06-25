@@ -7,8 +7,8 @@
 Pixels::Pixels()
 {
   Index = 0;
-  Interval = 1;
-  TotalSteps = 255;
+  initTimeTransition = 0;
+  finishTimeTransition = 0;
 }
 
 Pixels::~Pixels()
@@ -19,11 +19,8 @@ Pixels::~Pixels()
 void Pixels::randomColor(Adafruit_NeoPixel &_pixels)
 {
   Serial.println("in rand");
-  int red = random(0, 255);
-  int green = random(0, 255);
-  int blue = random(0, 255);
   for (int i = 0; i < NUMPIXELS; i++) {
-    _pixels.setPixelColor(i, _pixels.Color(red, green, blue));
+    _pixels.setPixelColor(i, _pixels.Color(random(0, 255), random(0, 255), random(0, 255)));
     _pixels.show();
   }
 }
@@ -34,81 +31,135 @@ void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blu
     _pixels.setPixelColor(i, _pixels.Color(_red, _green, _blue));
     _pixels.show();
   }
-
 }
 
-void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, String _newColor, String _oldColor)
+void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans)
 {
-  Vector3 color_new = returnColorValues(_pixels, _newColor);
-  Vector3 color_old = returnColorValues(_pixels, _oldColor);
-  while (Index <= 1) {
-  
-    
-    uint32_t r = color_old.x*(1-Index) + color_new.x*Index;
-    uint32_t g = color_old.y*(1-Index) + color_new.y*Index;
-    uint32_t b = color_old.z*(1-Index) + color_new.z*Index;
-  
-    uint32_t color_mix = _pixels.Color(r,g,b);
-    
-    for (int i = 0; i < NUMPIXELS; i++)
-    {
-        _pixels.setPixelColor(i, color_mix);
-        _pixels.show();
-     }
-     
-     Index = Index + 0.008;
-  
-  }
-  Index = 0;
+  Vector3 color_new = Vector3(0, 0, 0);
+  Vector3 color_old = Vector3(0, 0, 0);
+  //color_new = returnColorValues(_newColor);
+  //color_old = returnColorValues(_oldColor);
 
-}
+  if (_newColor == 'r') {
+    color_new = Vector3(255, 0, 0);
+  }
+  else if (_newColor == 'g') {
+    color_new = Vector3(0, 255, 0);
+  }
+  else if (_newColor == 'b') {
+    color_new = Vector3(0, 0, 255);
+  }
+  else {
+    Serial.println("MAAAAAAAL");
+  }
 
-Vector3 Pixels::returnColorValues(Adafruit_NeoPixel &_pixels, String _color) {
-  if (_color == "red") {
-    return Vector3(255, 0, 0);
-  }
-  else if  (_color == "green") {
-    return Vector3(0, 255, 0);
-  }
-  else if  (_color == "blue") {
-   return Vector3(0, 0, 255);
-  }
-}
 
-void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, String _kColor, float _accx) {
-
-  //Serial.print(_accx);
-  if (_kColor == "blue") {
-    for (int i = 0; i < NUMPIXELS; i++)
-    {
-      //_pixels.setPixelColor(i, Wheel(_pixels, ((i * 256 / NUMPIXELS) + Index) & 255));
-    }
-    _pixels.show();
-    Index++;
+  if (_oldColor == 'r') {
+    color_old = Vector3(255, 0, 0);
   }
-  else if (_kColor == "red") {
-    for (int i = 0; i < NUMPIXELS; i++) {
-      _pixels.setPixelColor(i, _pixels.Color(255, 0, 0));
+  else if (_oldColor == 'g') {
+    color_old = Vector3(0, 255, 0);
+  }
+  else if (_oldColor == 'b') {
+    color_old = Vector3(0, 0, 255);
+  }
+  else {
+    Serial.println("MU MAAAL");
+    //color_old.printValues();
+  }
+
+
+  if (timeTrans <= 1) {
+    r = color_old.x * (1 - timeTrans) + color_new.x * timeTrans;
+    g = color_old.y * (1 - timeTrans) + color_new.y * timeTrans;
+    b = color_old.z * (1 - timeTrans) + color_new.z * timeTrans;
+    color_mix = _pixels.Color(r, g, b);
+
+    for (int i = 0; i < NUMPIXELS; i++ ) {
+      _pixels.setPixelColor(i, color_mix);
       _pixels.show();
     }
   }
-  else if (_kColor == "green") {
-    for (int i = 0; i < NUMPIXELS; i++) {
-      _pixels.setPixelColor(i, _pixels.Color(0, 255, 0));
+  //color_new.x = 0; color_new.y = 0; color_new.z = 0;
+  //color_old.x = 0; color_old.y = 0; color_old.z = 0;
+}
+
+void Pixels::wupTransitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans) {
+  //  Vector3 color_new = returnColorValues(_newColor);
+  //  Vector3 color_old = returnColorValues(_oldColor);
+  //
+  //  for (float i = 0; i < NUMPIXELS; i++) {
+  //    uint32_t r = color_old.x * (1 - i / (float)NUMPIXELS) + color_new.x * i / NUMPIXELS;
+  //    uint32_t g = color_old.y * (1 - i / (float)NUMPIXELS) + color_new.y * i / NUMPIXELS;
+  //    uint32_t b = color_old.z * (1 - i / (float)NUMPIXELS) + color_new.z * i / NUMPIXELS;
+  //
+  //    uint32_t color_mix = _pixels.Color(r, g, b);
+  //    Serial.println(i + (int)(timeTrans * 40) - 40);
+  //
+  //    if (i + (int)timeTrans * NUMPIXELS - NUMPIXELS < 0)
+  //    {
+  //      continue;
+  //    }
+  //    else if (i + (int)timeTrans * NUMPIXELS - NUMPIXELS >= 40)
+  //    {
+  //      continue;
+  //    }
+  //    _pixels.setPixelColor(i + (int)timeTrans * NUMPIXELS - NUMPIXELS, color_mix);
+  //  }
+  //  _pixels.show();
+  //  Serial.println("hello");
+
+}
+
+void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, float _accy, float _accz, float _time) {
+
+  Serial.print(_accx);
+  Serial.print(" ");
+  Serial.print(_accy);
+  Serial.print(" ");
+  Serial.print(_accz);
+
+
+  /*Serial.print(" / ");
+    Serial.print(r_tint);
+    Serial.print(" ");
+    Serial.print(g_tint);
+    Serial.print(" ");
+    Serial.print(b_tint);*/
+
+
+  if (_kColor == 'r') {
+    //get tint
+    r_tint = map(_accx, 0, 10, 220, 255);
+    g_tint = map(_accy, 0, 10, 0, 30);
+    b_tint = map(_accz, 0, 10, 0, 30);
+    for (int i = 0; i < NUMPIXELS; i++ ) {
+      _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
+      _pixels.show();
+    }
+  }
+
+  else if (_kColor == 'g') {
+    r_tint = map(_accx, 0, 10, 0, 50);
+    g_tint = map(_accy, 0, 10, 220, 255);
+    b_tint = map(_accz, 0, 10, 50, 0);
+    for (int i = 0; i < NUMPIXELS; i++ ) {
+      _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
+      _pixels.show();
+    }
+  }
+  
+  else if (_kColor == 'b') {
+    r_tint = map(_accx, 0, 10, 0, 50);
+    g_tint = map(_accy, 0, 10, 0, 50);
+    b_tint = map(_accz, 0, 10, 220, 255);
+    for (int i = 0; i < NUMPIXELS; i++ ) {
+      _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
       _pixels.show();
     }
   }
 }
 
-void Pixels::Increment()
-{
-  Index++;
-}
-
-
-
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
 uint32_t Pixels::Wheel(Adafruit_NeoPixel &_pixels, byte WheelPos) {
   WheelPos = 255 - WheelPos;
   if (WheelPos < 85) {
