@@ -25,7 +25,7 @@ class States {
         unsigned long previousMillis;
         bool stateMode = false;
         bool transitionMode = false;
-        const long interval = 3000;
+        const long interval = 10000;
 
     
 

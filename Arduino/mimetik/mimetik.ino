@@ -161,9 +161,19 @@ void loop() {
     float timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
     while (timeTransition < 1)
     {
+      x = analogRead(0); delay(1); y = analogRead(1); delay(1); z = analogRead(2); delay(1);
+
+      xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
+      ytemp = constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255);
+      ztemp = constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255);
+
+      currentAcc->x = mapf(xtemp, 0, 255, 0, 10);
+      currentAcc->y = mapf(ytemp, 0, 255, 0, 10);
+      currentAcc->z = mapf(ztemp, 0, 255, 0, 10);
+      
       timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
 
-      pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition);
+      pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition, currentAcc->x, currentAcc->y, currentAcc->z, stateObj->interval);
       //pixel_obj->wupTransitionPixels(pixels, stateObj->next_state, stateObj->current_state,timeTransition);
     }
   }
@@ -189,7 +199,7 @@ void loop() {
   /**************** State mode ***************/
   if (stateObj->stateMode) {
     //pixel_obj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
-    pixel_obj->ColorShift(pixels, stateObj->current_state, currentAcc->x, currentAcc->y,currentAcc->z, millis());
+    pixel_obj->ColorShift(pixels, stateObj->current_state, currentAcc->x, currentAcc->y, currentAcc->z, millis());
     stateObj->transitionMode = false;
   }
 
