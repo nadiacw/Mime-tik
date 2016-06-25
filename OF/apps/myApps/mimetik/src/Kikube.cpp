@@ -20,7 +20,7 @@ Kikube::Kikube(string id){
     } else {
         perror ("The following error occurred");
     }
-    
+	this->firstTime = 1;
 
 }
 
@@ -35,6 +35,21 @@ string Kikube::getId() {
     return this->ID;
     
 }
+
+void Kikube::setTrack(ofxAbletonLiveTrack* track)
+{	
+		/*
+		this->abletonTrack_previous->initTime = ofGetElapsedTimef();
+		this->abletonTrack_previous->setFadeOut(ofGetElapsedTimef() + 3);
+		*/
+
+		this->abletonTrack = track;
+		this->abletonTrack->initTime = ofGetElapsedTimef();
+		this->abletonTrack->setFadeIn(ofGetElapsedTimef() + 3);
+		this->abletonTrack_previous = this->abletonTrack;
+		
+}
+
 
 
     
