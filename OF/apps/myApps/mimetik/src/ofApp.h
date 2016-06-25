@@ -40,17 +40,17 @@ class ofApp : public ofBaseApp{
 		int initTime;
 		int endTime;
 		int elapsedTime;
-		bool sumTime;
-		float timeNorm;
+		int firstTime;
+		vector<ofxAbletonLiveTrack*> waterTracks;
+		int trackIndexTemp;
+		vector<int> activeTracks;
+		int recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack);
 
-		void setupAbletonGui();
-		void setTrackToKikube(string state);
-       
+		void setupAbletonGui();	       
     
     
 private:
     map <string, ofSerial> Kikube_serial_hashmap;
     map <string, Kikube> Kikube_hashmap;
-
 		
 };

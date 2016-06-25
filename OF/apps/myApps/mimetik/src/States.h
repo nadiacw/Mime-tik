@@ -17,10 +17,14 @@ class States {
         string getState();
         void setState(string state);
         void defineDirection(string previous_state, string actual_state);
+		void setTransition(int duration, float currentTime);
         string state;
+		string previousState;
         string direction;
-    
+		
+
     private:
-    
-    
+		int transitionDuration;
+		int initTransition;
+		int finishTransition;
 };

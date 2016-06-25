@@ -5,7 +5,7 @@
 void ofApp::setup(){
     
     messageIndex = 0;
-    
+	firstTime = 0;
     //SERIAL SETUP
     mySerial.listDevices();
     int id = 0;
@@ -37,21 +37,32 @@ void ofApp::setup(){
             // push new kikube serial into a list of kikubes serials
             Kikube_serial_hashmap[id_string] = kikubeSerial[id];
             
-            
             id++;
         }
     }
 
-	//********************ABLETON***************************
-	// can connect to AbletonLive in localhost (same machine) or over the network if an IP address given.
-	// additionally provide an event listener for when live has been setup
 	live.setup("localhost", this, &ofApp::setupAbletonGui);
+	
+	//waits until connection is done
+	while (live.getTracks().size() < 1)
+	{
+		live.update();
+	}
+	
+	//sort all tracks depending on type
+	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
+	for (int i = 0; i < live.getTracks().size(); i++) {
+		/*string trackNameType = explode(it->second->getName(),'_')[0];
+		if (trackNameType == "w")
+		{
+			waterTracks.push_back(it->second);
+		}*/
 
-	// it takes a couple of seconds to parse all the OSC data and build the gui.
-	// wait a few seconds before calling any of the getter functions for it to populate the data
-
-	elapsedTime = 0;
-	sumTime = false;
+		it->second->setVolume(0.0);
+		waterTracks.push_back(it->second);
+		it++;
+	}
+	live.play();
 }
 
 //--------------------------------------------------------------
@@ -71,7 +82,6 @@ void ofApp::update(){
             {
                 //read one byte
                 char val = iterator->second.readByte();
-
                 if(val=='#')
                 {
                     hasFoundEndOfFile = true;
@@ -92,17 +102,33 @@ void ofApp::update(){
             vector<string> explode_str = explode(bytesReceived,'?');
             for(int i = 0; i < explode_str.size(); i++)
             {
-                
                 if(explode_str[i][0] == 's')
                 {
-              
                     vector<string> state_part = explode(explode_str[i], ':');
-                    
                     
                     // Define the new state at State class
                     cout << iterator->first << " ";
                     Kikube_hashmap[iterator->first].kikube_state.setState(state_part[1]);
-                    
+					int currentIndex = NULL;
+					//set track per kikube depends on the index track
+					if (Kikube_hashmap[iterator->first].kikube_state.previousState == "blue" && Kikube_hashmap[iterator->first].direction == "#")
+					{
+						currentIndex = recursiveGetIndex(waterTracks);
+						(&Kikube_hashmap[iterator->first])->setTrack(live.getTrack(currentIndex));
+					}
+					else if (Kikube_hashmap[iterator->first].kikube_state.previousState == "blue" && Kikube_hashmap[iterator->first].direction == "right#")
+					{
+						currentIndex = recursiveGetIndex(waterTracks);
+						(&Kikube_hashmap[iterator->first])->setTrack(live.getTrack(currentIndex));
+					}
+					else if (Kikube_hashmap[iterator->first].kikube_state.previousState == "blue" && Kikube_hashmap[iterator->first].direction == "right#")
+					{
+						currentIndex = recursiveGetIndex(waterTracks);
+						(&Kikube_hashmap[iterator->first])->setTrack(live.getTrack(currentIndex));
+
+					}
+					
+
                     //reinit the send char array
                     unsigned char send[7];
                     for ( int j = 0; j< Kikube_hashmap[iterator->first].kikube_state.direction.size(); j++) {
@@ -112,35 +138,26 @@ void ofApp::update(){
                    
                     Kikube_serial_hashmap[iterator->first].writeBytes(send,Kikube_hashmap[iterator->first].kikube_state.direction.size());
                 }
+
+				if (explode_str[i][0] == 't')
+				{
+					vector<string> transTime_part = explode(explode_str[i], ':');
+					Kikube_hashmap[iterator->first].kikube_state.setTransition(std::stoi(transTime_part[1]), ofGetElapsedTimef());
+				}
             }
 
             // if end of file find ( s found ) flush it
             if(hasFoundEndOfFile) {
                 iterator->second.flush();
-                
             }
         } else {
             // start again without flush
             continue;
-        
         }
         i++;
-        
     }
     
-
-	//***************ABLETON*****************
-	// don't forget to run this! otherwise no OSC messages received
 	live.update();
-
-	if (sumTime)
-	{
-		elapsedTime += ofGetElapsedTimef();
-		if (elapsedTime < endTime)
-		{
-			timeNorm = ofMap(elapsedTime, 0, 5, 0, 1);
-		}
-	}
 
 	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
 	float currentTime = ofGetElapsedTimef();
@@ -185,6 +202,20 @@ vector<string> ofApp::explode(string mssg, char delim)
     return result;
 }
 
+int ofApp::recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack) {
+
+	int tempVectorIndex = ofRandom(0, listTrack.size());
+	int trackIndex = waterTracks[tempVectorIndex]->getTrackIndex();
+
+	if (std::find(activeTracks.begin(), activeTracks.end(),trackIndex) != activeTracks.end()) {
+		return recursiveGetIndex(listTrack);
+	}
+	else {
+		activeTracks.push_back(trackIndex);
+		return trackIndex;
+	}
+
+}
 //--------------------------------------------------------------
 void ofApp::draw(){
 
@@ -219,6 +250,15 @@ void ofApp::keyPressed(int key){
 		it->second->setFadeIn(ofGetElapsedTimef() + 5);
 		cout << "fading in" << endl;
 	}
+
+	if (key == 'l') {
+		cout << "click: " << endl;
+		Kikube *kik_temp = new Kikube("69");
+		
+		kik_temp->setTrack(waterTracks);
+	}
+
+
 
 }
 

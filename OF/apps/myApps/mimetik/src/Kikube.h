@@ -9,6 +9,8 @@
 
 #include "ofMain.h"
 #include "States.h"
+#include "ofxAbletonLiveTrack.h"
+
 
 class Kikube
 {
@@ -17,13 +19,17 @@ public:
     ~Kikube();
     string getId();
     States kikube_state;
-    
+	void setTrack(ofxAbletonLiveTrack* track);
+	string direction;
+
     
 private:
     string ID;
     string color;
-    string direction;
     string nextColor;
+	ofxAbletonLiveTrack* abletonTrack;
+	ofxAbletonLiveTrack* abletonTrack_previous;
+
     
 };
 
