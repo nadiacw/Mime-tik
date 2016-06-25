@@ -15,20 +15,19 @@ class States {
     public:
         States();
         ~States();
-        String getState();
-        String getDirection();
+        char getState();
+        char getDirection();
         void setNextState();
         void beginStateTransition();
-        String current_state;
-        String stateDirection;
-        String next_state;
+        char current_state;
+        char stateDirection;
+        char next_state;
         unsigned long previousMillis;
-        bool normalColorMode = false;
-        bool doingTransition = false;
+        bool stateMode = false;
+        bool transitionMode = false;
+        const long interval = 3000;
 
     
-    private:
-      const long interval = 3000;
 
     
 };

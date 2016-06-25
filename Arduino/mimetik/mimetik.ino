@@ -5,6 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
+
 #include "Vector3.h"
 #include "SensorColor.h"
 #include "Pixels.h"
@@ -12,7 +13,14 @@
 
 int x, y, z;
 float xm, ym, zm, temp;
-int xmin, ymin, zmin, xmax, ymax, zmax;
+int xmin, ymin, zmin, xmax, ymax, zmax, xtemp, ytemp, ztemp;
+const int xpin = A3;                  // x-axis of the accelerometer
+const int ypin = A2;                  // y-axis
+const int zpin = A1;                  // z-axis (only on 3-axis models)
+#define zero_G 512.0
+#define scale 102.3
+
+int detectedColor;
 int old_color;
 bool foundNewPossibleFace = false, firstEntry = false;
 Vector3 *possibleFace;
@@ -27,26 +35,16 @@ States *stateObj;
 
 char values[255];
 
-String kikubeColor, kikubeState;
-
-/********* NUMBER OF PIXELS **********/
-int numPixels = 6;
-#define pixelPin 3;
-
 int i = 0;
 
-
-const int xpin = A3;                  // x-axis of the accelerometer
-const int ypin = A2;                  // y-axis
-const int zpin = A1;                  // z-axis (only on 3-axis models)
+char newC;
+char oldC;
 
 /********* Bluetooth settings *********/
 SoftwareSerial BT(10, 11); // Bluetooth 10 RX, 11 TX.
 
-/**************** Detect color settings *************************/
-
+/**************** Color sensor settings *************************/
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
-String str_detectedColor;
 
 /*************** Pixels settings ****************/
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -56,11 +54,9 @@ void setup() {
   Serial.begin(9600);
   // Start Bluetooth connection
   BT.begin(9600);
-  //handshake
-  //BT.write("a");
 
   // set acc inputs
-  analogReference(EXTERNAL);  // sets the serial port to 9600
+  analogReference(EXTERNAL);
   x = analogRead(0);
   y = analogRead(1);
   z = analogRead(2);
@@ -73,161 +69,135 @@ void setup() {
   //initialize the led strip object
   pixels.begin();
   pixel_obj = new Pixels();
+  //pixels.setBrightness(20);
 
   old_color = -1;
-  kikubeColor = "none";
-  kikubeState = "sleep";
   stateObj = new States();
 }
 
 void loop() {
-  /**********************detection color***************/
+
+  /********************** Color sensor detection ***************/
   colorSensor->calculateColor(tcs);  //colorSensor->printResults();
-  int detectedColor = colorSensor->detectColor();
-  /******************end detection color****************/
+  detectedColor = colorSensor->detectColor();
 
   if (old_color != detectedColor) {
     old_color = detectedColor;
 
+    /**************** WRITE Bluetooth messages ***************/
     switch (detectedColor)
     {
       case 0:
         BT.write("s:red?");
         //pixel_obj->RGBColor(pixels, 255, 0, 0);
         RGBvalues = new Vector3(255, 0, 0);
-        kikubeColor = "red";
-        stateObj->next_state = kikubeColor;
+        stateObj->next_state = 'r';
         stateObj->previousMillis = millis();
         break;
       case 1:
         BT.write("s:green?");
         //pixel_obj->RGBColor(pixels, 0, 255, 0);
         RGBvalues = new Vector3(0, 255, 0);
-        kikubeColor = "green";
         stateObj->previousMillis = millis();
-        stateObj->next_state = kikubeColor;
+        stateObj->next_state = 'g';
         break;
       case 2:
         BT.write("s:blue?");
         //pixel_obj->RGBColor(pixels, 0, 0, 255);
         RGBvalues = new Vector3(0, 0, 255);
-        kikubeColor = "blue";
         stateObj->previousMillis = millis();
-        stateObj->next_state = kikubeColor;
+        stateObj->next_state = 'b';
         break;
       default:
         BT.write("s:none?");
         break;
     }
 
-    if (stateObj->current_state == "sleep") {
-      stateObj->current_state = kikubeColor;
-      stateObj->normalColorMode = true;
+    if (stateObj->current_state == 's') //s means sleep state
+    {
+      stateObj->current_state = stateObj->next_state;
+      stateObj->next_state = '0'; //0 means no state
+      stateObj->stateMode = true;
     }
-
-    /*if (stateObj->ableToChangeColor)
-      {
-      stateObj->previousMillis = millis();
-      stateObj->stateDirection = values;
-      //stateObj->setNextState();
-      stateObj->next_state = kikubeColor;
-      }*/
 
     // END OF MESSAGE
     BT.write("#");
   }
-  /**********************end bluetooth set/get data******************/
 
 
-  /*********************Bluetooth set/get data**********************/
+  /**************** READ Bluetooth messages ***************/
   if (BT.available()) {
     // get value from OF
     char value = BT.read();
     if (value != '#')
-    {
       values[i++] = value;
-    }
 
     if (value == '#')
-    {
       clean();
-    }
   }
 
-  if (stateObj->next_state != "")
+
+  /**************** Transition mode ***************/
+  if (stateObj->next_state != '0')
   {
     Serial.print("Current state: ");  Serial.println(stateObj->current_state);
     Serial.print("transition to: ");  Serial.println(stateObj->next_state);
 
+    if (!stateObj->transitionMode) {
+      pixel_obj->initTimeTransition = millis();
+      pixel_obj->finishTimeTransition = millis() + stateObj->interval;
+    }
+
     stateObj->beginStateTransition();
-
-    //stateObj->current_state = stateObj->next_state;
   }
-  
-  //****************KIKUBE IN MODE OF TRANSITION OF COLOR********************
-  if(stateObj->doingTransition)
+
+  /**************** Pixels in transition ********************/
+  if (stateObj->transitionMode)
   {
-        //pixel_obj->RGBColor(pixels, 210, 0, 127);
-        pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state);
+    Serial.print("init time is: "); Serial.print(pixel_obj->initTimeTransition);
+    Serial.print(" finish time is: "); Serial.print(pixel_obj->finishTimeTransition);
+    Serial.print(" millis are: "); Serial.print(millis());
+    Serial.print(" mapped time is: ");
+    float timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
+    while (timeTransition < 1)
+    {
+      timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
+
+      pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition);
+      //pixel_obj->wupTransitionPixels(pixels, stateObj->next_state, stateObj->current_state,timeTransition);
+    }
   }
-  /*****************************************************
-    end direction set/get data
-  */
 
+  /**************** Read acc data ***************/
+  x = analogRead(0); delay(1); y = analogRead(1); delay(1); z = analogRead(2); delay(1);
 
-  /*****************************************************
-    acc analog reads
-  */
-  x = analogRead(0);       // read analog input pin 0
-  delay(1);
-  y = analogRead(1);       // read analog input pin 1
-  delay(1);
-  z = analogRead(2);       // read analog input pin 2
-  delay(1);
+  xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
+  ytemp = constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255);
+  ztemp = constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255);
 
-  //zero_G is the reading we expect from the sensor when it detects
-  //no acceleration.  Subtract this value from the sensor reading to
-  //get a shifted sensor reading.
-  float zero_G = 512.0;
+  currentAcc->x = mapf(xtemp, 0, 255, 0, 10);
+  currentAcc->y = mapf(ytemp, 0, 255, 0, 10);
+  currentAcc->z = mapf(ztemp, 0, 255, 0, 10);
 
-  //scale is the number of units we expect the sensor reading to
-  //change when the acceleration along an axis changes by 1G.
-  //Divide the shifted sensor reading by scale to get acceleration in Gs.
-  float scale = 102.3;
+  //detectFace(currentAcc);
 
-  //continuar...
+  /*String acc = "";
+    acc = (String)currentAcc->x + ',' + (String)currentAcc->y + ',' + (String)currentAcc->z;*/
 
-  int xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
-  int ytemp = constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255);
-  int ztemp = constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255);
-
-  currentAcc->x = mapf(xtemp, 0, 255, -1, 1);
-  currentAcc->y = mapf(ytemp, 0, 255, -1, 1);
-  currentAcc->z = mapf(ztemp, 0, 255, -1, 1);
-
-  detectFace(currentAcc);
-
-  // send acc data
-  String acc = "";
-  acc = (String)currentAcc->x + ',' + (String)currentAcc->y + ',' + (String)currentAcc->z;
-  //Serial.println(acc);
-  //BT.write("");
   //currentAcc->printValues();
 
-  // Modulate leds based on acc data
-  //Serial.print(kikubeColor);
-
-  if (stateObj->normalColorMode) {
-    Serial.print("RGB values");
-    Serial.print(RGBvalues->x); Serial.print(", ");
-    Serial.print(RGBvalues->y); Serial.print(", ");
-    Serial.print(RGBvalues->z); Serial.println(" ");
-    pixel_obj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
-    //pixel_obj->ColorShift(pixels, kikubeColor, currentAcc->x);
-    stateObj->doingTransition = false;
+  /**************** State mode ***************/
+  if (stateObj->stateMode) {
+    //pixel_obj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
+    pixel_obj->ColorShift(pixels, stateObj->current_state, currentAcc->x, currentAcc->y,currentAcc->z, millis());
+    stateObj->transitionMode = false;
   }
 
+
+
 }
+
+/**************** Functions ***************/
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {

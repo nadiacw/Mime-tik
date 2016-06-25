@@ -12,7 +12,7 @@
 States::States() {
 
   // initialize first state => ' sleep '
-  this->current_state = "sleep";
+  this->current_state = 's';
 
 }
 
@@ -20,10 +20,10 @@ States::~States() {
 
 }
 
-String States::getState() {
+char States::getState() {
   return current_state;
 }
-String States::getDirection() {
+char States::getDirection() {
 
   return stateDirection;
 }
@@ -31,17 +31,17 @@ String States::getDirection() {
 void States::setNextState() {
 
   Serial.print("Direction: "); Serial.println(this->stateDirection);
-  if (this->current_state == "red")
+  if (this->current_state == 'r')
   {
-    this->next_state = this->stateDirection == "right" ? "blue" : "green";
+    this->next_state = this->stateDirection == 'R' ? 'b' : 'g';
   }
-  else if (this->current_state == "green")
+  else if (this->current_state == 'g')
   {
-    this->next_state = this->stateDirection == "right" ? "red" : "blue";
+    this->next_state = this->stateDirection == 'R' ? 'r' : 'b';
   }
-  else if (this->current_state == "blue")
+  else if (this->current_state == 'b')
   {
-    this->next_state = this->stateDirection == "right" ? "green" : "red";
+    this->next_state = this->stateDirection == 'R' ? 'g' : 'r';
   }
   else
   {
@@ -51,18 +51,18 @@ void States::setNextState() {
 
 void States::beginStateTransition()
 {
-    Serial.print("Previous millis: ");  Serial.println(previousMillis);
+    Serial.print("Previous millis: ");  Serial.print(previousMillis); Serial.print(" and moment is: "); Serial.println(millis() - previousMillis);
     if (millis() - previousMillis >= interval) {
       this->current_state = this->next_state;
-      this->next_state = "";
-      this->normalColorMode = true;
-      doingTransition = false;
+      this->next_state = '0';
+      stateMode = true;
+      transitionMode = false;
       Serial.println("Set up next state value");
     }
     else
     {
-      normalColorMode = false;
-      doingTransition = true;
+      stateMode = false;
+      transitionMode = true;
     }
 }
 
