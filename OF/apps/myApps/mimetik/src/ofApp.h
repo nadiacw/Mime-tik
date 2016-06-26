@@ -45,8 +45,8 @@ class ofApp : public ofBaseApp{
 		int trackIndexTemp;
 		vector<int> activeTracks;
 		int recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack);
-
-		void setupAbletonGui();	       
+        void setIndexTrack(Kikube *kikube);
+		void setupAbletonGui();
     
     
 private:

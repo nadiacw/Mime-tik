@@ -20,15 +20,18 @@ public:
     string getId();
     States kikube_state;
 	void setTrack(ofxAbletonLiveTrack* track);
+    int getPreviousIndexTrack();
 	string direction;
-
+    ofxAbletonLiveTrack* abletonTrack;
+    ofxAbletonLiveTrack* abletonTrack_previous;
+    bool firstIteration;
+    int indexPrevious;
     
 private:
     string ID;
     string color;
     string nextColor;
-	ofxAbletonLiveTrack* abletonTrack;
-	ofxAbletonLiveTrack* abletonTrack_previous;
+    
 
     
 };
