@@ -19,14 +19,18 @@ class Pixels {
 float T;
 float freq;
 
-    int Index;  // current step within the pattern
+float brightness;
+
+    //int Index;  // current step within the pattern
 
     void randomColor(Adafruit_NeoPixel &_pixels);
-    void RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blue);
+    void RGBColor(Adafruit_NeoPixel &_pixels, uint8_t _red, uint8_t _green, uint8_t _blue);
+
+    // SLEEP MODE
+    void sleepPixels(Adafruit_NeoPixel &_pixels);
 
     // TRANSITION MODE
     void transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans, float accx, float accy, float accz, const long _interval);
-    void wupTransitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans);
 
     // STATE MODE
     void ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, float _accy, float _accz, float _time);

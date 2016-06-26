@@ -25,20 +25,21 @@ int old_color;
 bool foundNewPossibleFace = false, firstEntry = false;
 Vector3 *possibleFace;
 bool isMoving = false;
+bool hasMoved = false;
 
 Vector3 *currentAcc;
 Vector3 *currentFace;
 Vector3 *RGBvalues;
 SensorColor *colorSensor;
-Pixels *pixel_obj;
+Pixels *pixelObj;
 States *stateObj;
 
 char values[255];
 
 int i = 0;
 
-char newC;
-char oldC;
+unsigned long TIME;
+
 
 /********* Bluetooth settings *********/
 SoftwareSerial BT(10, 11); // Bluetooth 10 RX, 11 TX.
@@ -68,65 +69,40 @@ void setup() {
 
   //initialize the led strip object
   pixels.begin();
-  pixel_obj = new Pixels();
+  pixelObj = new Pixels();
   //pixels.setBrightness(20);
 
   old_color = -1;
   stateObj = new States();
+  stateObj->current_state = 's';
 }
 
 void loop() {
-
-  /********************** Color sensor detection ***************/
-  colorSensor->calculateColor(tcs);  //colorSensor->printResults();
-  detectedColor = colorSensor->detectColor();
-
-  if (old_color != detectedColor) {
-    old_color = detectedColor;
-
-    /**************** WRITE Bluetooth messages ***************/
-    switch (detectedColor)
-    {
-      case 0:
-        BT.write("s:red?");
-        //pixel_obj->RGBColor(pixels, 255, 0, 0);
-        RGBvalues = new Vector3(255, 0, 0);
-        stateObj->next_state = 'r';
-        stateObj->previousMillis = millis();
-        break;
-      case 1:
-        BT.write("s:green?");
-        //pixel_obj->RGBColor(pixels, 0, 255, 0);
-        RGBvalues = new Vector3(0, 255, 0);
-        stateObj->previousMillis = millis();
-        stateObj->next_state = 'g';
-        break;
-      case 2:
-        BT.write("s:blue?");
-        //pixel_obj->RGBColor(pixels, 0, 0, 255);
-        RGBvalues = new Vector3(0, 0, 255);
-        stateObj->previousMillis = millis();
-        stateObj->next_state = 'b';
-        break;
-      default:
-        BT.write("s:none?");
-        break;
+  /**************** GET MILLIS ***************/
+  TIME = millis();
+  
+  /**************** SLEEP state ***************/
+  if (stateObj->current_state == 's') {
+    while (stateObj->current_state == 's' && !hasMoved) {
+      Serial.println("not moving!");
+      ReadAcc();
+      pixelObj->sleepPixels(pixels);
+      hasMoved = isMoving;
     }
-
-    if (stateObj->current_state == 's') //s means sleep state
-    {
-      stateObj->current_state = stateObj->next_state;
-      stateObj->next_state = '0'; //0 means no state
-      stateObj->stateMode = true;
-    }
-
-    // END OF MESSAGE
-    BT.write("#");
+    Serial.println("moved!");
+    hasMoved = true;
+    ReadColorSensor();
+    pixelObj->RGBColor(pixels,255,255,255);
+    pixels.setBrightness(255);
   }
 
 
+  /********************** Color sensor detection ***************/
+
+  ReadColorSensor();
+
   /**************** READ Bluetooth messages ***************/
-  if (BT.available()) {
+  if (BT.available() && stateObj->current_state != 's') {
     // get value from OF
     char value = BT.read();
     if (value != '#')
@@ -138,14 +114,14 @@ void loop() {
 
 
   /**************** Transition mode ***************/
-  if (stateObj->next_state != '0')
+  if (stateObj->next_state != '0' && stateObj->current_state != 's')
   {
     Serial.print("Current state: ");  Serial.println(stateObj->current_state);
     Serial.print("transition to: ");  Serial.println(stateObj->next_state);
 
     if (!stateObj->transitionMode) {
-      pixel_obj->initTimeTransition = millis();
-      pixel_obj->finishTimeTransition = millis() + stateObj->interval;
+      pixelObj->initTimeTransition = TIME;
+      pixelObj->finishTimeTransition = TIME + stateObj->interval;
     }
 
     stateObj->beginStateTransition();
@@ -154,11 +130,11 @@ void loop() {
   /**************** Pixels in transition ********************/
   if (stateObj->transitionMode)
   {
-    Serial.print("init time is: "); Serial.print(pixel_obj->initTimeTransition);
-    Serial.print(" finish time is: "); Serial.print(pixel_obj->finishTimeTransition);
-    Serial.print(" millis are: "); Serial.print(millis());
+    Serial.print("init time is: "); Serial.print(pixelObj->initTimeTransition);
+    Serial.print(" finish time is: "); Serial.print(pixelObj->finishTimeTransition);
+    //Serial.print(" millis are: "); Serial.print(millis());
     Serial.print(" mapped time is: ");
-    float timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
+    float timeTransition = mapf(TIME, pixelObj->initTimeTransition, pixelObj->finishTimeTransition, 0, 1);
     while (timeTransition < 1)
     {
       x = analogRead(0); delay(1); y = analogRead(1); delay(1); z = analogRead(2); delay(1);
@@ -170,15 +146,84 @@ void loop() {
       currentAcc->x = mapf(xtemp, 0, 255, 0, 10);
       currentAcc->y = mapf(ytemp, 0, 255, 0, 10);
       currentAcc->z = mapf(ztemp, 0, 255, 0, 10);
-      
-      timeTransition = mapf(millis(), pixel_obj->initTimeTransition, pixel_obj->finishTimeTransition, 0, 1);
 
-      pixel_obj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition, currentAcc->x, currentAcc->y, currentAcc->z, stateObj->interval);
-      //pixel_obj->wupTransitionPixels(pixels, stateObj->next_state, stateObj->current_state,timeTransition);
+      timeTransition = mapf(millis(), pixelObj->initTimeTransition, pixelObj->finishTimeTransition, 0, 1);
+
+      pixelObj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition, currentAcc->x, currentAcc->y, currentAcc->z, stateObj->interval);
+      //pixelObj->wupTransitionPixels(pixels, stateObj->next_state, stateObj->current_state,timeTransition);
     }
   }
 
   /**************** Read acc data ***************/
+
+  ReadAcc();
+
+  /**************** State mode ***************/
+  if (stateObj->stateMode) {
+    //pixelObj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
+    pixelObj->ColorShift(pixels, stateObj->current_state, currentAcc->x, currentAcc->y, currentAcc->z, TIME);
+    stateObj->transitionMode = false;
+  }
+
+
+  // END LOOP
+}
+
+/**************** Functions ***************/
+
+void ReadColorSensor() {
+
+  colorSensor->calculateColor(tcs);  //colorSensor->printResults();
+  detectedColor = colorSensor->detectColor();
+
+  if (old_color != detectedColor) {
+    old_color = detectedColor;
+
+    /**************** WRITE Bluetooth messages ***************/
+    switch (detectedColor)
+    {
+      case 0:
+        BT.write("s:red?");
+        //pixelObj->RGBColor(pixels, 255, 0, 0);
+        RGBvalues = new Vector3(255, 0, 0);
+        stateObj->next_state = 'r';
+        stateObj->previousMillis = TIME;
+        break;
+      case 1:
+        BT.write("s:green?");
+        //pixelObj->RGBColor(pixels, 0, 255, 0);
+        RGBvalues = new Vector3(0, 255, 0);
+        stateObj->previousMillis = TIME;
+        stateObj->next_state = 'g';
+        break;
+      case 2:
+        BT.write("s:blue?");
+        //pixelObj->RGBColor(pixels, 0, 0, 255);
+        RGBvalues = new Vector3(0, 0, 255);
+        stateObj->previousMillis = TIME;
+        stateObj->next_state = 'b';
+        break;
+      default:
+        BT.write("s:none?");
+        break;
+    }
+
+    // FIRST COLOR DETECTION
+    if (stateObj->current_state == 's') //s means sleep state
+    {
+      stateObj->current_state = stateObj->next_state;
+      stateObj->next_state = '0'; //0 means no state
+      stateObj->stateMode = true;
+      pixels.setBrightness(255);
+    }
+
+    // END OF MESSAGE
+    BT.write("#");
+  }
+
+}
+
+void ReadAcc() {
   x = analogRead(0); delay(1); y = analogRead(1); delay(1); z = analogRead(2); delay(1);
 
   xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
@@ -189,25 +234,10 @@ void loop() {
   currentAcc->y = mapf(ytemp, 0, 255, 0, 10);
   currentAcc->z = mapf(ztemp, 0, 255, 0, 10);
 
-  //detectFace(currentAcc);
-
-  /*String acc = "";
-    acc = (String)currentAcc->x + ',' + (String)currentAcc->y + ',' + (String)currentAcc->z;*/
+  detectFace(currentAcc);
 
   //currentAcc->printValues();
-
-  /**************** State mode ***************/
-  if (stateObj->stateMode) {
-    //pixel_obj->RGBColor(pixels, RGBvalues->x, RGBvalues->y, RGBvalues->z);
-    pixel_obj->ColorShift(pixels, stateObj->current_state, currentAcc->x, currentAcc->y, currentAcc->z, millis());
-    stateObj->transitionMode = false;
-  }
-
-
-
 }
-
-/**************** Functions ***************/
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -216,14 +246,14 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void detectFace(Vector3 * currentAcc)
 {
-  if (abs(currentAcc->x - currentFace->x) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 || abs(currentAcc->y - currentFace->y) > 0.3 )
+  if (abs(currentAcc->x - currentFace->x) > 3 || abs(currentAcc->y - currentFace->y) > 3 || abs(currentAcc->y - currentFace->y) > 3 )
   {
     isMoving = false;
     if (firstEntry)
     {
       foundNewPossibleFace = true;
       possibleFace = currentAcc;
-      temp = millis();
+      temp = TIME;
       firstEntry = false;
       //Serial.print("Has detected possible face: ");
     }
@@ -231,7 +261,7 @@ void detectFace(Vector3 * currentAcc)
     {
       if (foundNewPossibleFace)
       {
-        if (millis() - temp >= 1000) {
+        if (TIME - temp >= 1000) {
           currentFace = possibleFace;
           firstEntry = true;
           //Serial.println("Has updated face");

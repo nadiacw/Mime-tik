@@ -6,9 +6,10 @@
 
 Pixels::Pixels()
 {
-  Index = 0;
+  //Index = 0;
   initTimeTransition = 0;
   finishTimeTransition = 0;
+  brightness = 255;
 }
 
 Pixels::~Pixels()
@@ -25,7 +26,7 @@ void Pixels::randomColor(Adafruit_NeoPixel &_pixels)
   }
 }
 
-void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blue)
+void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, uint8_t _red, uint8_t _green, uint8_t _blue)
 {
   for (int i = 0; i < NUMPIXELS; i++) {
     _pixels.setPixelColor(i, _pixels.Color(_red, _green, _blue));
@@ -33,10 +34,21 @@ void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, int _red, int _green, int _blu
   }
 }
 
+//
+
+void Pixels::sleepPixels(Adafruit_NeoPixel &_pixels) {
+  brightness = mapfloat(sin(millis() / 500.0), -1, 1, 0, 255);
+  _pixels.setBrightness(brightness);
+  for (int i = 0; i < NUMPIXELS; i++) {
+    _pixels.setPixelColor(i, _pixels.Color(100, 100, 100));
+    _pixels.show();
+  }
+}
+
 void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans, float _accx, float _accy, float _accz, const long _interval) {
   T = _interval / (_interval * repetitions);
   freq = 1.0 / T;
-  float brightness = mapfloat(sin((timeTrans + 0.25 * T) * 3.14 * 2 * freq ), -1, 1, 50, 255);
+  brightness = mapfloat(sin((timeTrans + 0.25 * T) * 3.14 * 2 * freq ), -1, 1, 50, 255);
   _pixels.setBrightness(brightness);
 
   Vector3 color_new = Vector3(0, 0, 0);
@@ -112,40 +124,13 @@ void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _
   //color_old.x = 0; color_old.y = 0; color_old.z = 0;
 }
 
-void Pixels::wupTransitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _oldColor, float timeTrans) {
-  //  Vector3 color_new = returnColorValues(_newColor);
-  //  Vector3 color_old = returnColorValues(_oldColor);
-  //
-  //  for (float i = 0; i < NUMPIXELS; i++) {
-  //    uint32_t r = color_old.x * (1 - i / (float)NUMPIXELS) + color_new.x * i / NUMPIXELS;
-  //    uint32_t g = color_old.y * (1 - i / (float)NUMPIXELS) + color_new.y * i / NUMPIXELS;
-  //    uint32_t b = color_old.z * (1 - i / (float)NUMPIXELS) + color_new.z * i / NUMPIXELS;
-  //
-  //    uint32_t color_mix = _pixels.Color(r, g, b);
-  //    Serial.println(i + (int)(timeTrans * 40) - 40);
-  //
-  //    if (i + (int)timeTrans * NUMPIXELS - NUMPIXELS < 0)
-  //    {
-  //      continue;
-  //    }
-  //    else if (i + (int)timeTrans * NUMPIXELS - NUMPIXELS >= 40)
-  //    {
-  //      continue;
-  //    }
-  //    _pixels.setPixelColor(i + (int)timeTrans * NUMPIXELS - NUMPIXELS, color_mix);
-  //  }
-  //  _pixels.show();
-  //  Serial.println("hello");
-
-}
-
 void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, float _accy, float _accz, float _time) {
 
-  Serial.print(_accx);
-  Serial.print(" ");
-  Serial.print(_accy);
-  Serial.print(" ");
-  Serial.print(_accz);
+  /*Serial.print(_accx);
+    Serial.print(" ");
+    Serial.print(_accy);
+    Serial.print(" ");
+    Serial.print(_accz);*/
 
 
   /*Serial.print(" / ");

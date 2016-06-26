@@ -1,11 +1,3 @@
-//
-//  States,cpp
-//  mimetik
-//
-//  Created by Sergi Armengol Suquet on 28/5/16.
-//
-//
-
 #include "States.h"
 
 
