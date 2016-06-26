@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 #include "Vector3.h"
-#include "SensorColor.h"
+#include "ColorSensor.h"
 #include "Pixels.h"
 #include "States.h"
 
@@ -30,7 +30,7 @@ bool hasMoved = false;
 Vector3 *currentAcc;
 Vector3 *currentFace;
 Vector3 *RGBvalues;
-SensorColor *colorSensor;
+ColorSensor *colorSensorObj;
 Pixels *pixelObj;
 States *stateObj;
 
@@ -65,7 +65,7 @@ void setup() {
   currentFace = new Vector3(1, 1, 0);
 
   // initialize the sensor color object
-  colorSensor = new SensorColor(tcs);
+  colorSensorObj = new ColorSensor(tcs);
 
   //initialize the led strip object
   pixels.begin();
@@ -75,11 +75,18 @@ void setup() {
   old_color = -1;
   stateObj = new States();
   stateObj->current_state = 's';
+
 }
 
 void loop() {
   /**************** GET MILLIS ***************/
   TIME = millis();
+  
+    while(millis()<1000){
+    colorSensorObj->calibrate(tcs);
+    Serial.println("EOoooo");}
+  
+  Serial.println(stateObj->current_state);
   
   /**************** SLEEP state ***************/
   if (stateObj->current_state == 's') {
@@ -91,8 +98,7 @@ void loop() {
     }
     Serial.println("moved!");
     hasMoved = true;
-    ReadColorSensor();
-    pixelObj->RGBColor(pixels,255,255,255);
+    pixelObj->RGBColor(pixels,200,200,200);
     pixels.setBrightness(255);
   }
 
@@ -173,8 +179,8 @@ void loop() {
 
 void ReadColorSensor() {
 
-  colorSensor->calculateColor(tcs);  //colorSensor->printResults();
-  detectedColor = colorSensor->detectColor();
+  colorSensorObj->calculateColor(tcs);  colorSensorObj->printResults();
+  detectedColor = colorSensorObj->detectColor();
 
   if (old_color != detectedColor) {
     old_color = detectedColor;

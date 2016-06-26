@@ -37,7 +37,7 @@ void Pixels::RGBColor(Adafruit_NeoPixel &_pixels, uint8_t _red, uint8_t _green, 
 //
 
 void Pixels::sleepPixels(Adafruit_NeoPixel &_pixels) {
-  brightness = mapfloat(sin(millis() / 500.0), -1, 1, 0, 255);
+  brightness = mapfloat(sin(millis() / 500.0), -1, 1, 20, 100);
   _pixels.setBrightness(brightness);
   for (int i = 0; i < NUMPIXELS; i++) {
     _pixels.setPixelColor(i, _pixels.Color(100, 100, 100));
