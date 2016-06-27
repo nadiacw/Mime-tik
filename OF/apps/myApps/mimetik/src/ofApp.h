@@ -41,7 +41,21 @@ class ofApp : public ofBaseApp{
 		int endTime;
 		int elapsedTime;
 		int firstTime;
-		vector<ofxAbletonLiveTrack*> waterTracks;
+    
+        // Tracks lists per state and direction
+		ofxAbletonLiveTrack* waterTracks_right;
+        vector<ofxAbletonLiveTrack*> waterTracks;
+        ofxAbletonLiveTrack* waterTracks_left;
+    
+        ofxAbletonLiveTrack* fireTracks_right;
+        vector<ofxAbletonLiveTrack*> fireTracks;
+        ofxAbletonLiveTrack* fireTracks_left;
+    
+        ofxAbletonLiveTrack* forestTracks_right;
+        vector<ofxAbletonLiveTrack*> forestTracks;
+        ofxAbletonLiveTrack* forestTracks_left;
+    
+    
 		int trackIndexTemp;
 		vector<int> activeTracks;
 		int recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack);

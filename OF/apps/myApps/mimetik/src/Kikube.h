@@ -31,8 +31,5 @@ private:
     string ID;
     string color;
     string nextColor;
-    
-
-    
 };
 

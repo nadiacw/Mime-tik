@@ -44,7 +44,7 @@ void ofApp::setup(){
 	live.setup("localhost", this, &ofApp::setupAbletonGui);
 	
 	//waits until connection is done
-	while (live.getTracks().size() < 6)
+	while (live.getTracks().size() < 31)
 	{
 		live.update();
 	}
@@ -52,16 +52,47 @@ void ofApp::setup(){
 	//sort all tracks depending on type
 	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
 	for (int i = 0; i < live.getTracks().size(); i++) {
-		/*string trackNameType = explode(it->second->getName(),'_')[0];
-		if (trackNameType == "w")
-		{
-			waterTracks.push_back(it->second);
-		}*/
-        cout << "Track name: ";
-        cout << it->second->getName() << endl;
+        
+        // Select in which list has to be the track depends on the name
+		vector<string> trackNameType = explode(it->second->getName(),'_');
+
+        if(trackNameType[0] == "r")
+        {
+            fireTracks.push_back(it->second);
+        }
+        else if(trackNameType[0] == "g")
+        {
+            forestTracks.push_back(it->second);
+        }
+        else if (trackNameType[0] == "b")
+        {
+            waterTracks.push_back(it->second);
+        }
+        else if(trackNameType[0] == "t")
+        {
+            if(trackNameType[1] == "r")
+            {
+                if(trackNameType[2] == "r") fireTracks_right = it->second;
+                if(trackNameType[2] == "l") fireTracks_left = it->second;
+            }
+            else if(trackNameType[1] == "g")
+            {
+                if(trackNameType[2] == "r") forestTracks_right = it->second;
+                if(trackNameType[2] == "l") forestTracks_left = it->second;
+                
+            }
+            else if(trackNameType[1] == "b")
+            {
+                if(trackNameType[2] == "r") waterTracks_right = it->second;
+                if(trackNameType[2] == "l") waterTracks_left = it->second;
+            }
+        }
+      
+        
+        cout << "Track name: " << it->second->getName() << endl;
 
 		it->second->setVolume(0.0);
-		waterTracks.push_back(it->second);
+        
 		it++;
 	}
 	live.play();
@@ -73,7 +104,6 @@ void ofApp::update(){
     //SERIAL PART
 
     map<string,ofSerial>::iterator iterator = Kikube_serial_hashmap.begin();
-    
     for(; iterator != Kikube_serial_hashmap.end(); iterator++)
     {
         if ( iterator->second.available() > 0)
@@ -93,7 +123,6 @@ void ofApp::update(){
                 //store it in the array at index i
                 bytesReceived[messageIndex] = val;
                 messageIndex++;
-                //cout << val;
             }
             if(!hasFoundEndOfFile)
             {
@@ -113,8 +142,6 @@ void ofApp::update(){
                     Kikube_hashmap[iterator->first].kikube_state.setState(state_part[1]);
                     setIndexTrack(&Kikube_hashmap[iterator->first]);
                    
-					
-
                     //reinit the send char array
                     /*unsigned char send[7];
                     for ( int j = 0; j< Kikube_hashmap[iterator->first].kikube_state.direction.size(); j++) {
@@ -125,7 +152,6 @@ void ofApp::update(){
                     Kikube_serial_hashmap[iterator->first].writeBytes(send,Kikube_hashmap[iterator->first].kikube_state.direction.size());
                      */
                 }
-
             }
 
             // if end of file find ( s found ) flush it
@@ -139,6 +165,16 @@ void ofApp::update(){
         i++;
     }
     
+    map<string,Kikube>::iterator it_kikube = Kikube_hashmap.begin();
+    for (; it_kikube != Kikube_hashmap.end(); it_kikube++)
+    {
+        if(it_kikube->second.kikube_state.getFinishTime() < ofGetElapsedTimef())
+        {
+            it_kikube->second.kikube_state.direction = "#";
+            
+        }
+    }
+    
 	live.update();
 
 	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
@@ -146,7 +182,7 @@ void ofApp::update(){
 	for (; it != live.getTracks().end(); it++)
 	{
 		it->second->Update(currentTime);
-	}
+ 	}
 }
 /***
  Recursive function to check if Serial is connected otherwise try it again
@@ -163,79 +199,91 @@ ofSerial ofApp::setupSerial(int i, int baudrate)
 }
 
 
-
 /***
  Get the previous state and calculate the new index track per kikube
  ***/
 void ofApp::setIndexTrack(Kikube *kikube) {
     int currentIndex = NULL;
     int previousIndex = NULL;
-    cout << "Num tracks: ";
-    cout << waterTracks.size() << endl;
+
     //set track per kikube depends on the index track
     if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
         currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
+        cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
         kikube->setTrack(live.getTrack(currentIndex));
-       
     }
     else if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
-       
+        kikube->setTrack(live.getTrack(waterTracks_left->getTrackIndex()));
+        cout << "Track name: " << live.getTrack(waterTracks_left->getTrackIndex())->getName() << endl;
+        activeTracks.push_back(waterTracks_left->getTrackIndex());
     }
     else if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
+        kikube->setTrack(live.getTrack(waterTracks_right->getTrackIndex()));
+        cout << "Track name: " << live.getTrack(waterTracks_right->getTrackIndex())->getName() << endl;
+        activeTracks.push_back(waterTracks_right->getTrackIndex());
+
+        
     } else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
+        currentIndex = recursiveGetIndex(fireTracks);
+        cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
         kikube->setTrack(live.getTrack(currentIndex));
+        
     }else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
+        kikube->setTrack(live.getTrack(fireTracks_right->getTrackIndex()));
+        cout << "Track name: " << fireTracks_left->getName() << endl;
+        cout << "Track name: " << live.getTrack(fireTracks_left->getTrackIndex())->getName() << endl;
+        activeTracks.push_back(fireTracks_right->getTrackIndex());
+
+        
     } else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
-    }
-    else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("#") == 0)
+        kikube->setTrack(live.getTrack(fireTracks_left->getTrackIndex()));
+        cout << "Track name: " << live.getTrack(fireTracks_right->getTrackIndex())->getName() << endl;
+        cout << "Track name: " << fireTracks_right->getName() << endl;
+        activeTracks.push_back(fireTracks_left->getTrackIndex());
+        
+    } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
+        currentIndex = recursiveGetIndex(forestTracks);
+        cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
+        
         kikube->setTrack(live.getTrack(currentIndex));
+        
     } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
-    }
-    else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
+        kikube->setTrack(live.getTrack(forestTracks_left->getTrackIndex()));
+        cout << "Track name: " << live.getTrack(forestTracks_left->getTrackIndex())->getName() << endl;
+    
+        activeTracks.push_back(forestTracks_left->getTrackIndex());
+
+        
+    } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
-        currentIndex = recursiveGetIndex(waterTracks);
-        cout << "index is: " << currentIndex << endl;
-        kikube->setTrack(live.getTrack(currentIndex));
+        kikube->setTrack(live.getTrack(forestTracks_right->getTrackIndex()));
+        cout << "Track name: " << live.getTrack(forestTracks_right->getTrackIndex())->getName() << endl;
+        activeTracks.push_back(forestTracks_right->getTrackIndex());
+        
+    } else if(kikube->kikube_state.previousState.compare("sleep") == 0)
+    {
+        //look current state
+        
+        
     }
     
     //When there're some previous tracks
     previousIndex = kikube->getPreviousIndexTrack();
     cout << "Previous index: " << previousIndex << endl;
-    if(kikube->indexPrevious != -1){
-        
+    if(kikube->indexPrevious != -1) {
         // delete active index of the previous track
         activeTracks.erase(std::remove(activeTracks.begin(), activeTracks.end(), previousIndex), activeTracks.end());
     }
     
-    cout << activeTracks.size() << endl;
+    cout << "Active tracks are: " << activeTracks.size() << endl;
     for(std::vector<int>::iterator it_active = activeTracks.begin(); it_active != activeTracks.end(); it_active++)
     {
         cout << *it_active << endl;
@@ -292,6 +340,9 @@ int ofApp::recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack) {
     }
     
 }
+
+
+
 //--------------------------------------------------------------
 void ofApp::draw(){
     

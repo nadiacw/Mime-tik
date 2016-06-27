@@ -22,7 +22,6 @@ Kikube::Kikube(string id){
     }
 	this->firstIteration = true;
     this->indexPrevious = -1;
-
 }
 
 Kikube::~Kikube(){
@@ -39,7 +38,8 @@ string Kikube::getId() {
 
 void Kikube::setTrack(ofxAbletonLiveTrack* track)
 {
-    if(this->firstIteration == false){
+    if(this->firstIteration == false)
+    {
         this->abletonTrack_previous = this->abletonTrack;
         this->indexPrevious = this->abletonTrack_previous->getTrackIndex();
         this->abletonTrack_previous->initTime = ofGetElapsedTimef();
@@ -50,7 +50,6 @@ void Kikube::setTrack(ofxAbletonLiveTrack* track)
     this->abletonTrack->initTime = ofGetElapsedTimef();
     this->abletonTrack->setFadeIn(ofGetElapsedTimef() + 3);
     this->firstIteration = false;
-		
 }
 
 

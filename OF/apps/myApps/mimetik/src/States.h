@@ -21,9 +21,11 @@ class States {
         string state;
 		string previousState;
         string direction;
+    float getFinishTime();
 		
 
     private:
+        bool isInTransition;
 		int transitionDuration;
 		int initTransition;
 		int finishTransition;

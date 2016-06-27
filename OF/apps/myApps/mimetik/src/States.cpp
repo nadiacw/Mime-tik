@@ -30,50 +30,59 @@ void States::setState(string forward_state) {
     // define the direction that kikube has.
     defineDirection(state, forward_state);
     
-    // redefine state as previous state
-	this->previousState = this->state;
+    /*if(state == "sleep")
+    {
+        // redefine state as previous state
+        this->previousState = this->state;
+        this->state = forward_state;
+        cout << "Actual state: " << state;
+        cout << " Actual direction: " << direction << endl;
+    }
+    else{
+        this->previousState = this->state;
+        this->state = forward_state;
+        setTransition(10, ofGetElapsedTimef());
+    }*/
+    this->previousState = this->state;
     this->state = forward_state;
     cout << "Actual state: " << state;
     cout << " Actual direction: " << direction << endl;
 }
 
-void States::defineDirection(string previous_state, string forward_state) {
+void States::defineDirection(string current_state, string forward_state) {
    
-    if(previous_state == "red" && forward_state == "blue") {
+    if(current_state == "red" && forward_state == "blue") {
         
         this->direction = "right#";
         
-    } else if (previous_state == "blue" && forward_state == "red") {
+    } else if (current_state == "blue" && forward_state == "red") {
         
         this->direction = "left#";
         
-    }else if(previous_state == "red" && forward_state == "green") {
+    }else if(current_state == "red" && forward_state == "green") {
         
         this->direction = "left#";
         
-    }else if(previous_state == "green" && forward_state == "red") {
+    }else if(current_state == "green" && forward_state == "red") {
         
         this->direction = "right#";
         
-    }else if(previous_state == "green" && forward_state == "blue") {
+    }else if(current_state == "green" && forward_state == "blue") {
         
         this->direction = "left#";
         
-    }else if(previous_state == "blue" && forward_state == "green") {
+    }else if(current_state == "blue" && forward_state == "green") {
         
         this->direction = "right#";
         
-    } else if(previous_state == "sleep" || forward_state == "sleep") {
+    } else if(current_state == "sleep" || forward_state == "sleep") {
         
         this->direction = "#";
     
     } else {
-        
         this->direction = "error";
         cout << "Sorry, there's a problem with the direction " << endl;
     }
-    
-    
 }
 
 void States::setTransition(int duration, float currentTime)
@@ -81,6 +90,11 @@ void States::setTransition(int duration, float currentTime)
 	transitionDuration = duration;
 	initTransition = currentTime;
 	finishTransition = initTransition + transitionDuration;
+}
+
+float States::getFinishTime()
+{
+    return finishTransition;
 }
 
 
