@@ -88,7 +88,6 @@ void ofApp::setup(){
             }
         }
       
-        
         cout << "Track name: " << it->second->getName() << endl;
 
 		it->second->setVolume(0.0);
@@ -100,6 +99,7 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
     int i = 0;
     //SERIAL PART
 
@@ -168,10 +168,11 @@ void ofApp::update(){
     map<string,Kikube>::iterator it_kikube = Kikube_hashmap.begin();
     for (; it_kikube != Kikube_hashmap.end(); it_kikube++)
     {
-        if(it_kikube->second.kikube_state.getFinishTime() < ofGetElapsedTimef())
+        if(it_kikube->second.kikube_state.isInTransition  && it_kikube->second.kikube_state.getFinishTime() < ofGetElapsedTimef())
         {
-            it_kikube->second.kikube_state.direction = "#";
-            
+            cout << "updating state of: " << it_kikube->second.getId() << endl;
+            it_kikube->second.kikube_state.updateStateFromTransition();
+            setIndexTrack(&Kikube_hashmap[it_kikube->first]);
         }
     }
     
@@ -183,7 +184,12 @@ void ofApp::update(){
 	{
 		it->second->Update(currentTime);
  	}
+    
 }
+//END UPDATE
+
+
+
 /***
  Recursive function to check if Serial is connected otherwise try it again
  ***/
@@ -205,73 +211,66 @@ ofSerial ofApp::setupSerial(int i, int baudrate)
 void ofApp::setIndexTrack(Kikube *kikube) {
     int currentIndex = NULL;
     int previousIndex = NULL;
-
+    
     //set track per kikube depends on the index track
-    if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("#") == 0)
+    if (kikube->kikube_state.state.compare("blue") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
         currentIndex = recursiveGetIndex(waterTracks);
         cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
         kikube->setTrack(live.getTrack(currentIndex));
     }
-    else if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
+    else if (kikube->kikube_state.state.compare("blue") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
         kikube->setTrack(live.getTrack(waterTracks_left->getTrackIndex()));
         cout << "Track name: " << live.getTrack(waterTracks_left->getTrackIndex())->getName() << endl;
         activeTracks.push_back(waterTracks_left->getTrackIndex());
     }
-    else if (kikube->kikube_state.previousState.compare("blue") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
+    else if (kikube->kikube_state.state.compare("blue") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
         kikube->setTrack(live.getTrack(waterTracks_right->getTrackIndex()));
         cout << "Track name: " << live.getTrack(waterTracks_right->getTrackIndex())->getName() << endl;
         activeTracks.push_back(waterTracks_right->getTrackIndex());
-
-        
-    } else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("red") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
         currentIndex = recursiveGetIndex(fireTracks);
         cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
         kikube->setTrack(live.getTrack(currentIndex));
-        
-    }else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("red") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
         kikube->setTrack(live.getTrack(fireTracks_right->getTrackIndex()));
         cout << "Track name: " << fireTracks_left->getName() << endl;
         cout << "Track name: " << live.getTrack(fireTracks_left->getTrackIndex())->getName() << endl;
         activeTracks.push_back(fireTracks_right->getTrackIndex());
-
-        
-    } else if (kikube->kikube_state.previousState.compare("red") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("red") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
         kikube->setTrack(live.getTrack(fireTracks_left->getTrackIndex()));
         cout << "Track name: " << live.getTrack(fireTracks_right->getTrackIndex())->getName() << endl;
         cout << "Track name: " << fireTracks_right->getName() << endl;
         activeTracks.push_back(fireTracks_left->getTrackIndex());
-        
-    } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
         currentIndex = recursiveGetIndex(forestTracks);
         cout << "Track name: " << live.getTrack(currentIndex)->getName() << endl;
-        
         kikube->setTrack(live.getTrack(currentIndex));
-        
-    } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
         kikube->setTrack(live.getTrack(forestTracks_left->getTrackIndex()));
         cout << "Track name: " << live.getTrack(forestTracks_left->getTrackIndex())->getName() << endl;
-    
         activeTracks.push_back(forestTracks_left->getTrackIndex());
-
-        
-    } else if (kikube->kikube_state.previousState.compare("green") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
+    }
+    else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
         kikube->setTrack(live.getTrack(forestTracks_right->getTrackIndex()));
         cout << "Track name: " << live.getTrack(forestTracks_right->getTrackIndex())->getName() << endl;
         activeTracks.push_back(forestTracks_right->getTrackIndex());
-        
-    } else if(kikube->kikube_state.previousState.compare("sleep") == 0)
+    }
+    else if(kikube->kikube_state.state.compare("sleep") == 0)
     {
-        //look current state
-        
         
     }
     

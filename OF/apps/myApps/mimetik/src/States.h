@@ -10,23 +10,31 @@
 #include "ofMain.h"
 
 class States {
-
-    public:
-        States();
-        ~States();
-        string getState();
-        void setState(string state);
-        void defineDirection(string previous_state, string actual_state);
-		void setTransition(int duration, float currentTime);
-        string state;
-		string previousState;
-        string direction;
+    
+public:
+    States();
+    ~States();
+    
+    string getState();
+    void setState(string state);
+    
+    void defineDirection(string previous_state, string actual_state);
+    void setTimeTransition(int duration, float currentTime);
+    void updateStateFromTransition();
+    
+    string state;
+    string previousState;
+    string forwardState;
+    string direction;
+    
     float getFinishTime();
-		
+    bool isInTransition;
+    
+    void printStates();
 
-    private:
-        bool isInTransition;
-		int transitionDuration;
-		int initTransition;
-		int finishTransition;
+    
+private:
+    int transitionDuration;
+    int initTransition;
+    int finishTransition;
 };

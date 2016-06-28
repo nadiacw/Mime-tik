@@ -35,6 +35,7 @@ class ofApp : public ofBaseApp{
         char bytesReceived[NUM_MSG_BYTES];
 
 		//ABLETON
+        bool workWithAbleton;
 		ofxAbletonLive live;
 		AbletonGui gui;
 		int initTime;

@@ -12,7 +12,8 @@
 States::States() {
     
     // initialize first state => ' sleep '
-    this->state = "sleep";
+    state = "sleep";
+    finishTransition = 40000;
     
 }
 
@@ -25,28 +26,32 @@ string States::getState() {
     return state;
 }
 
-void States::setState(string forward_state) {
+void States::setState(string _forward_state) {
     
     // define the direction that kikube has.
-    defineDirection(state, forward_state);
+    defineDirection(state, _forward_state);
     
-    /*if(state == "sleep")
+    if(state == "sleep")
     {
         // redefine state as previous state
         this->previousState = this->state;
-        this->state = forward_state;
+        this->state = _forward_state;
         cout << "Actual state: " << state;
         cout << " Actual direction: " << direction << endl;
     }
     else{
-        this->previousState = this->state;
-        this->state = forward_state;
-        setTransition(10, ofGetElapsedTimef());
-    }*/
-    this->previousState = this->state;
+        this->forwardState = _forward_state;
+        cout << "Previous state: " << previousState;
+        cout << "; Current state: " << state;
+        cout << "; Forward state: " << forwardState;
+        cout << " Actual direction: " << direction << endl;
+        setTimeTransition(10, ofGetElapsedTimef());
+    }
+    
+    /*this->previousState = this->state;
     this->state = forward_state;
     cout << "Actual state: " << state;
-    cout << " Actual direction: " << direction << endl;
+    cout << " Actual direction: " << direction << endl;*/
 }
 
 void States::defineDirection(string current_state, string forward_state) {
@@ -85,16 +90,35 @@ void States::defineDirection(string current_state, string forward_state) {
     }
 }
 
-void States::setTransition(int duration, float currentTime)
+void States::setTimeTransition(int duration, float currentTime)
 {
+    isInTransition = true;
 	transitionDuration = duration;
 	initTransition = currentTime;
 	finishTransition = initTransition + transitionDuration;
 }
 
+void States::updateStateFromTransition()
+{
+    this->previousState = this->state;
+    this->state = this->forwardState;
+    this->forwardState = "";
+    this->direction = "#";
+    this->isInTransition = false;
+    printStates();
+}
+
 float States::getFinishTime()
 {
     return finishTransition;
+}
+
+void States::printStates()
+{
+    cout << "Previous state: " << previousState;
+    cout << "; Current state: " << state;
+    cout << "; Forward state: " << forwardState;
+    cout << " Actual direction: " << direction << endl;
 }
 
 

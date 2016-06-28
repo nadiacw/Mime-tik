@@ -17,8 +17,10 @@ class Kikube
 public:
     Kikube(string const id = "0");
     ~Kikube();
+    
     string getId();
     States kikube_state;
+    
 	void setTrack(ofxAbletonLiveTrack* track);
     int getPreviousIndexTrack();
 	string direction;

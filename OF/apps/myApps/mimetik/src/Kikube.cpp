@@ -11,7 +11,6 @@
 Kikube::Kikube(string id){
     
     if(id != "") {
-        
         this->ID = id;
         
         // initialize the state of these kikube
