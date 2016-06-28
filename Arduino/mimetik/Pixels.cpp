@@ -144,8 +144,8 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, f
   if (_kColor == 'r') {
     //get tint
     r_tint = map(_accx, 0, 10, 220, 255);
-    g_tint = map(_accy, 0, 10, 0, 30);
-    b_tint = map(_accz, 0, 10, 0, 30);
+    g_tint = map(_accz, 0, 10, 0, 30);
+    b_tint = map(_accy, 0, 10, 0, 30);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
       _pixels.show();
@@ -153,9 +153,9 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, f
   }
 
   else if (_kColor == 'g') {
-    r_tint = map(_accy, 0, 10, 0, 50);
-    g_tint = map(_accx, 0, 10, 220, 255);
-    b_tint = map(_accz, 0, 10, 50, 0);
+    r_tint = map(_accy, 0, 10, 0, 60);
+    g_tint = map(_accx, 0, 10, 200, 255);
+    b_tint = map(_accz, 0, 10, 60, 0);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));
       _pixels.show();
@@ -163,8 +163,8 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, f
   }
 
   else if (_kColor == 'b') {
-    r_tint = map(_accz, 0, 10, 0, 50);
-    g_tint = map(_accy, 0, 10, 0, 50);
+    r_tint = map(_accy, 0, 10, 0, 60);
+    g_tint = map(_accz, 0, 10, 0, 90);
     b_tint = map(_accx, 0, 10, 220, 255);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));

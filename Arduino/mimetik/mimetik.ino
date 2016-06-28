@@ -53,6 +53,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ80
 void setup() {
 
   Serial.begin(9600);
+  Serial.print("setup");
   // Start Bluetooth connection
   BT.begin(9600);
 
@@ -75,7 +76,7 @@ void setup() {
   old_color = -1;
   stateObj = new States();
   stateObj->current_state = 's';
-
+  Serial.print(" end setup");
 }
 
 void loop() {
@@ -179,7 +180,7 @@ void loop() {
 
 void ReadColorSensor() {
 
-  colorSensorObj->calculateColor(tcs);  colorSensorObj->printResults();
+  colorSensorObj->calculateColor(tcs);  //colorSensorObj->printResults();
   detectedColor = colorSensorObj->detectColor();
 
   if (old_color != detectedColor) {
@@ -242,7 +243,7 @@ void ReadAcc() {
 
   detectFace(currentAcc);
 
-  //currentAcc->printValues();
+  currentAcc->printValues();
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
