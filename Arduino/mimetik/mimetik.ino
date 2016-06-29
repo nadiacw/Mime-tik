@@ -12,7 +12,7 @@
 #include "States.h"
 
 int x, y, z;
-float xm, ym, zm, temp;
+float xm, ym, zm;
 int xmin, ymin, zmin, xmax, ymax, zmax, xtemp, ytemp, ztemp;
 const int xpin = A3;                  // x-axis of the accelerometer
 const int ypin = A2;                  // y-axis
@@ -28,7 +28,8 @@ bool isMoving = false;
 bool hasMoved = false;
 
 Vector3 *currentAcc;
-Vector3 *currentFace;
+Vector3 *lastAccRef;
+Vector3 *amountDiff;
 Vector3 *RGBvalues;
 ColorSensor *colorSensorObj;
 Pixels *pixelObj;
@@ -63,8 +64,15 @@ void setup() {
   y = analogRead(1);
   z = analogRead(2);
   currentAcc = new  Vector3(x, y, z);
-  currentFace = new Vector3(1, 1, 0);
+  xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
+  ytemp = constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255);
+  ztemp = constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255);
 
+  lastAccRef->x = mapf(xtemp, 0, 255, 0, 10);
+  lastAccRef->y = mapf(ytemp, 0, 255, 0, 10);
+  lastAccRef->z = mapf(ztemp, 0, 255, 0, 10);
+  
+  amountDiff = new Vector3(0,0,0);
   // initialize the sensor color object
   colorSensorObj = new ColorSensor(tcs);
 
@@ -76,30 +84,31 @@ void setup() {
   old_color = -1;
   stateObj = new States();
   stateObj->current_state = 's';
+  stateObj->isMoving = false;
+  
   Serial.print(" end setup");
 }
 
 void loop() {
+
   /**************** GET MILLIS ***************/
   TIME = millis();
-  
-    while(millis()<1000){
+
+  while (millis() < 1000) {
     colorSensorObj->calibrate(tcs);
-    Serial.println("EOoooo");}
-  
-  Serial.println(stateObj->current_state);
-  
+  }
+
   /**************** SLEEP state ***************/
-  if (stateObj->current_state == 's') {
-    while (stateObj->current_state == 's' && !hasMoved) {
+  if (stateObj->current_state == 's' || !stateObj->isMoving) {
+    while (!stateObj->isMoving)
+    {
       Serial.println("not moving!");
       ReadAcc();
       pixelObj->sleepPixels(pixels);
-      hasMoved = isMoving;
     }
+
     Serial.println("moved!");
-    hasMoved = true;
-    pixelObj->RGBColor(pixels,200,200,200);
+    pixelObj->RGBColor(pixels, 200, 200, 200);
     pixels.setBrightness(255);
   }
 
@@ -110,6 +119,7 @@ void loop() {
 
   /**************** READ Bluetooth messages ***************/
   if (BT.available() && stateObj->current_state != 's') {
+   
     // get value from OF
     char value = BT.read();
     if (value != '#')
@@ -127,11 +137,14 @@ void loop() {
     Serial.print("transition to: ");  Serial.println(stateObj->next_state);
 
     if (!stateObj->transitionMode) {
+      stateObj->temp = millis();
       pixelObj->initTimeTransition = TIME;
       pixelObj->finishTimeTransition = TIME + stateObj->interval;
     }
 
     stateObj->beginStateTransition();
+    
+   
   }
 
   /**************** Pixels in transition ********************/
@@ -141,7 +154,9 @@ void loop() {
     Serial.print(" finish time is: "); Serial.print(pixelObj->finishTimeTransition);
     //Serial.print(" millis are: "); Serial.print(millis());
     Serial.print(" mapped time is: ");
+
     float timeTransition = mapf(TIME, pixelObj->initTimeTransition, pixelObj->finishTimeTransition, 0, 1);
+
     while (timeTransition < 1)
     {
       x = analogRead(0); delay(1); y = analogRead(1); delay(1); z = analogRead(2); delay(1);
@@ -159,11 +174,13 @@ void loop() {
       pixelObj->transitionPixels(pixels, stateObj->next_state, stateObj->current_state, timeTransition, currentAcc->x, currentAcc->y, currentAcc->z, stateObj->interval);
       //pixelObj->wupTransitionPixels(pixels, stateObj->next_state, stateObj->current_state,timeTransition);
     }
+     stateObj->temp = pixelObj->finishTimeTransition; 
   }
 
   /**************** Read acc data ***************/
 
   ReadAcc();
+
 
   /**************** State mode ***************/
   if (stateObj->stateMode) {
@@ -222,6 +239,7 @@ void ReadColorSensor() {
       stateObj->next_state = '0'; //0 means no state
       stateObj->stateMode = true;
       pixels.setBrightness(255);
+      stateObj->temp = TIME; 
     }
 
     // END OF MESSAGE
@@ -242,8 +260,6 @@ void ReadAcc() {
   currentAcc->z = mapf(ztemp, 0, 255, 0, 10);
 
   detectFace(currentAcc);
-
-  currentAcc->printValues();
 }
 
 float mapf(float x, float in_min, float in_max, float out_min, float out_max)
@@ -253,35 +269,33 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void detectFace(Vector3 * currentAcc)
 {
-  if (abs(currentAcc->x - currentFace->x) > 3 || abs(currentAcc->y - currentFace->y) > 3 || abs(currentAcc->y - currentFace->y) > 3 )
+ 
+
+  if (abs(currentAcc->x - lastAccRef->x) > 8 || abs(currentAcc->y - lastAccRef->y) > 8 || abs(currentAcc->z - lastAccRef->z) > 8 )
   {
-    isMoving = false;
-    if (firstEntry)
-    {
-      foundNewPossibleFace = true;
-      possibleFace = currentAcc;
-      temp = TIME;
-      firstEntry = false;
-      //Serial.print("Has detected possible face: ");
+    if(millis() - stateObj->temp > 60000 ) {
+      Serial.println("Has passed 60 seconds");
+      
+      stateObj->isMoving = false;
+      stateObj->current_state = 's';
     }
-    else
-    {
-      if (foundNewPossibleFace)
-      {
-        if (TIME - temp >= 1000) {
-          currentFace = possibleFace;
-          firstEntry = true;
-          //Serial.println("Has updated face");
-        }
-      }
-    }
-  }
+  } 
   else
   {
-    foundNewPossibleFace = false;
-    //Serial.println("Is not moving");
-    isMoving = true;
+    amountDiff->x += abs(currentAcc->x - lastAccRef->x); 
+    amountDiff->y += abs(currentAcc->y - lastAccRef->y); 
+    amountDiff->z += abs(currentAcc->z - lastAccRef->z); 
+
+    if(amountDiff->x > 10 || amountDiff->y > 10 || amountDiff->z > 15) {
+      stateObj->isMoving = true;
+      amountDiff->x = 0;
+      amountDiff->y = 0;
+      amountDiff->z = 0;
+      stateObj->temp = TIME; 
+    }
+
   }
+
 }
 
 // clean values

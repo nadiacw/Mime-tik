@@ -19,7 +19,8 @@ class States {
         bool stateMode = false;
         bool transitionMode = false;
         const long interval = 10000;
-
+        bool isMoving;
+        float temp;
     
 
     
