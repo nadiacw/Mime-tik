@@ -141,16 +141,6 @@ void ofApp::update(){
                     cout << iterator->first << " ";
                     Kikube_hashmap[iterator->first].kikube_state.setState(state_part[1]);
                     setIndexTrack(&Kikube_hashmap[iterator->first]);
-                   
-                    //reinit the send char array
-                    /*unsigned char send[7];
-                    for ( int j = 0; j< Kikube_hashmap[iterator->first].kikube_state.direction.size(); j++) {
-                        send[j] = Kikube_hashmap[iterator->first].kikube_state.direction[j];
-                    }
-                    cout << "Send char: " << send << endl;
-                   
-                    Kikube_serial_hashmap[iterator->first].writeBytes(send,Kikube_hashmap[iterator->first].kikube_state.direction.size());
-                     */
                 }
             }
 
@@ -221,12 +211,20 @@ void ofApp::setIndexTrack(Kikube *kikube) {
     }
     else if (kikube->kikube_state.state.compare("blue") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),waterTracks_left->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
         kikube->setTrack(live.getTrack(waterTracks_left->getTrackIndex()));
         cout << "Track name: " << live.getTrack(waterTracks_left->getTrackIndex())->getName() << endl;
         activeTracks.push_back(waterTracks_left->getTrackIndex());
     }
     else if (kikube->kikube_state.state.compare("blue") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),waterTracks_right->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
         kikube->setTrack(live.getTrack(waterTracks_right->getTrackIndex()));
         cout << "Track name: " << live.getTrack(waterTracks_right->getTrackIndex())->getName() << endl;
         activeTracks.push_back(waterTracks_right->getTrackIndex());
@@ -239,17 +237,23 @@ void ofApp::setIndexTrack(Kikube *kikube) {
     }
     else if (kikube->kikube_state.state.compare("red") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
-        kikube->setTrack(live.getTrack(fireTracks_right->getTrackIndex()));
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),fireTracks_left->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
+        kikube->setTrack(live.getTrack(fireTracks_left->getTrackIndex()));
         cout << "Track name: " << fireTracks_left->getName() << endl;
-        cout << "Track name: " << live.getTrack(fireTracks_left->getTrackIndex())->getName() << endl;
-        activeTracks.push_back(fireTracks_right->getTrackIndex());
+        activeTracks.push_back(fireTracks_left->getTrackIndex());
     }
     else if (kikube->kikube_state.state.compare("red") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
-        kikube->setTrack(live.getTrack(fireTracks_left->getTrackIndex()));
-        cout << "Track name: " << live.getTrack(fireTracks_right->getTrackIndex())->getName() << endl;
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),fireTracks_right->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
+        kikube->setTrack(live.getTrack(fireTracks_right->getTrackIndex()));
         cout << "Track name: " << fireTracks_right->getName() << endl;
-        activeTracks.push_back(fireTracks_left->getTrackIndex());
+        activeTracks.push_back(fireTracks_right->getTrackIndex());
     }
     else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("#") == 0)
     {
@@ -259,19 +263,28 @@ void ofApp::setIndexTrack(Kikube *kikube) {
     }
     else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("left#") == 0)
     {
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),forestTracks_left->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
         kikube->setTrack(live.getTrack(forestTracks_left->getTrackIndex()));
         cout << "Track name: " << live.getTrack(forestTracks_left->getTrackIndex())->getName() << endl;
         activeTracks.push_back(forestTracks_left->getTrackIndex());
     }
     else if (kikube->kikube_state.state.compare("green") == 0 && kikube->kikube_state.direction.compare("right#") == 0)
     {
+        //FIND IF TRACK IS ALREADY ACTIVE
+        if (std::find(activeTracks.begin(), activeTracks.end(),forestTracks_right->getTrackIndex()) != activeTracks.end()) {
+            return;
+        }
         kikube->setTrack(live.getTrack(forestTracks_right->getTrackIndex()));
         cout << "Track name: " << live.getTrack(forestTracks_right->getTrackIndex())->getName() << endl;
         activeTracks.push_back(forestTracks_right->getTrackIndex());
     }
     else if(kikube->kikube_state.state.compare("sleep") == 0)
     {
-        
+        kikube->setTrack(live.getTrack(sleepTrack->getTrackIndex()));
+        activeTracks.push_back(forestTracks_right->getTrackIndex());
     }
     
     //When there're some previous tracks
@@ -282,11 +295,12 @@ void ofApp::setIndexTrack(Kikube *kikube) {
         activeTracks.erase(std::remove(activeTracks.begin(), activeTracks.end(), previousIndex), activeTracks.end());
     }
     
-    cout << "Active tracks are: " << activeTracks.size() << endl;
+    cout << "Active tracks are: " << activeTracks.size() << ": ";
     for(std::vector<int>::iterator it_active = activeTracks.begin(); it_active != activeTracks.end(); it_active++)
     {
-        cout << *it_active << endl;
+        cout << *it_active << ", ";
     }
+    cout << endl;
 }
 
 

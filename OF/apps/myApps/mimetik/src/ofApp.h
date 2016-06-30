@@ -15,53 +15,54 @@
 
 class ofApp : public ofBaseApp{
 
-	public:
-		void setup();
-		void update();
-		void draw();
-
-		void keyPressed(int key);
-		void keyReleased(int key);
-        void readArduinoData(ofSerial serial);
+public:
+    void setup();
+    void update();
+    void draw();
     
-        ofSerial setupSerial(int i, int baud);
-        vector<string> explode(char mssg[], char delim);
-        vector<string> explode(string mssg, char delim);
-
-        // Serial object
-        ofSerial mySerial;
-        ofSerial kikubeSerial[NUM_KIKUBES];
-        int messageIndex;
-        char bytesReceived[NUM_MSG_BYTES];
-
-		//ABLETON
-        bool workWithAbleton;
-		ofxAbletonLive live;
-		AbletonGui gui;
-		int initTime;
-		int endTime;
-		int elapsedTime;
-		int firstTime;
+    void keyPressed(int key);
+    void keyReleased(int key);
+    void readArduinoData(ofSerial serial);
     
-        // Tracks lists per state and direction
-		ofxAbletonLiveTrack* waterTracks_right;
-        vector<ofxAbletonLiveTrack*> waterTracks;
-        ofxAbletonLiveTrack* waterTracks_left;
+    ofSerial setupSerial(int i, int baud);
+    vector<string> explode(char mssg[], char delim);
+    vector<string> explode(string mssg, char delim);
     
-        ofxAbletonLiveTrack* fireTracks_right;
-        vector<ofxAbletonLiveTrack*> fireTracks;
-        ofxAbletonLiveTrack* fireTracks_left;
+    // Serial object
+    ofSerial mySerial;
+    ofSerial kikubeSerial[NUM_KIKUBES];
+    int messageIndex;
+    char bytesReceived[NUM_MSG_BYTES];
     
-        ofxAbletonLiveTrack* forestTracks_right;
-        vector<ofxAbletonLiveTrack*> forestTracks;
-        ofxAbletonLiveTrack* forestTracks_left;
+    //ABLETON
+    bool workWithAbleton;
+    ofxAbletonLive live;
+    AbletonGui gui;
+    int initTime;
+    int endTime;
+    int elapsedTime;
+    int firstTime;
     
+    // Tracks lists per state and direction
+    ofxAbletonLiveTrack* waterTracks_right;
+    vector<ofxAbletonLiveTrack*> waterTracks;
+    ofxAbletonLiveTrack* waterTracks_left;
     
-		int trackIndexTemp;
-		vector<int> activeTracks;
-		int recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack);
-        void setIndexTrack(Kikube *kikube);
-		void setupAbletonGui();
+    ofxAbletonLiveTrack* fireTracks_right;
+    vector<ofxAbletonLiveTrack*> fireTracks;
+    ofxAbletonLiveTrack* fireTracks_left;
+    
+    ofxAbletonLiveTrack* forestTracks_right;
+    vector<ofxAbletonLiveTrack*> forestTracks;
+    ofxAbletonLiveTrack* forestTracks_left;
+    
+    ofxAbletonLiveTrack* sleepTrack;
+    
+    int trackIndexTemp;
+    vector<int> activeTracks;
+    int recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack);
+    void setIndexTrack(Kikube *kikube);
+    void setupAbletonGui();
     
     
 private:

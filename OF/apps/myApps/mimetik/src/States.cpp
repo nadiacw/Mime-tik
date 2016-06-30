@@ -39,6 +39,12 @@ void States::setState(string _forward_state) {
         cout << "Actual state: " << state;
         cout << " Actual direction: " << direction << endl;
     }
+    else if(_forward_state == "sleep")
+    {
+        this->previousState = "sleep";
+        this->state = "sleep";
+        this->direction = "#";
+    }
     else{
         this->forwardState = _forward_state;
         cout << "Previous state: " << previousState;
