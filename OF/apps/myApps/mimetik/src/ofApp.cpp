@@ -44,7 +44,7 @@ void ofApp::setup(){
 	live.setup("localhost", this, &ofApp::setupAbletonGui);
 	
 	//waits until connection is done
-	while (live.getTracks().size() < 31)
+	while (live.getTracks().size() < 34)
 	{
 		live.update();
 	}
@@ -91,6 +91,13 @@ void ofApp::setup(){
         cout << "Track name: " << it->second->getName() << endl;
 
 		it->second->setVolume(0.0);
+        
+        if(it->second->getName() == "sleep")
+        {
+            sleepTrack = it->second;
+            it->second->setVolume(0.85);
+            sleepActive = true;
+        }
         
 		it++;
 	}
@@ -156,6 +163,7 @@ void ofApp::update(){
     }
     
     map<string,Kikube>::iterator it_kikube = Kikube_hashmap.begin();
+    int sleepCounter = 0;
     for (; it_kikube != Kikube_hashmap.end(); it_kikube++)
     {
         if(it_kikube->second.kikube_state.isInTransition  && it_kikube->second.kikube_state.getFinishTime() < ofGetElapsedTimef())
@@ -164,17 +172,27 @@ void ofApp::update(){
             it_kikube->second.kikube_state.updateStateFromTransition();
             setIndexTrack(&Kikube_hashmap[it_kikube->first]);
         }
+        if(it_kikube->second.kikube_state.state == "sleep")
+        {
+            sleepCounter++;
+        }
+    }
+    if(sleepCounter == Kikube_hashmap.size() && abs(sleepTrack->getVolume()) < 0.01 && !sleepActive)
+    {
+        sleepTrack->initTime = ofGetElapsedTimef();
+        sleepTrack->setFadeIn(ofGetElapsedTimef() + 1);
+        sleepActive = true;
+        cout << "setting fade in of sleep track " << endl;
     }
     
 	live.update();
-
+    
 	map<int, ofxAbletonLiveTrack*>::iterator it = live.getTracks().begin();
 	float currentTime = ofGetElapsedTimef();
 	for (; it != live.getTracks().end(); it++)
 	{
 		it->second->Update(currentTime);
  	}
-    
 }
 //END UPDATE
 
@@ -283,8 +301,19 @@ void ofApp::setIndexTrack(Kikube *kikube) {
     }
     else if(kikube->kikube_state.state.compare("sleep") == 0)
     {
-        kikube->setTrack(live.getTrack(sleepTrack->getTrackIndex()));
-        activeTracks.push_back(forestTracks_right->getTrackIndex());
+        /*kikube->abletonTrack->initTime = ofGetElapsedTimef();
+        kikube->abletonTrack->setFadeOut(ofGetElapsedTimef()+3);*/
+        kikube->KikubeFadeOut();
+        cout << "received sleep message: should fade out previous track" << endl;
+    }
+    
+    //check if sleep track is on; if it is: set a fade out
+    if(abs(0.85 - sleepTrack->getVolume()) < 0.1 && kikube->kikube_state.state.compare("sleep") != 0 && sleepActive)
+    {
+        sleepTrack->initTime = ofGetElapsedTimef();
+        sleepTrack->setFadeOut(ofGetElapsedTimef()+3);
+        sleepActive = false;
+        cout << "sleep track is ON and should be faded out" << endl;
     }
     
     //When there're some previous tracks
@@ -342,7 +371,7 @@ vector<string> ofApp::explode(char mssg[], char delim)
 int ofApp::recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack) {
     
     int tempVectorIndex = ofRandom(0, listTrack.size());
-    int trackIndex = waterTracks[tempVectorIndex]->getTrackIndex();
+    int trackIndex = listTrack[tempVectorIndex]->getTrackIndex();
     
     if (std::find(activeTracks.begin(), activeTracks.end(),trackIndex) != activeTracks.end()) {
         return recursiveGetIndex(listTrack);
@@ -407,4 +436,3 @@ void ofApp::setupAbletonGui()
 	// point we can generate a gui
 	gui.setup(&live);
 }
-

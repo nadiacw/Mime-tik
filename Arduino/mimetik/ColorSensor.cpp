@@ -31,7 +31,7 @@ void ColorSensor::calibrate(Adafruit_TCS34725 tcs) {
 
   uint8_t minColor = getMin(c_red, c_green, c_blue);
 
-  Serial.println(minColor);
+  //Serial.println(minColor);
 
   switch (minColor) {
     case 0:
@@ -52,7 +52,7 @@ void ColorSensor::calibrate(Adafruit_TCS34725 tcs) {
   }
 
   
-  Serial.println(c_red); Serial.println(c_green); Serial.println(c_blue);
+  //Serial.println(c_red); Serial.println(c_green); Serial.println(c_blue);
 
 }
 

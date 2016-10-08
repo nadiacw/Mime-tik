@@ -68,5 +68,7 @@ public:
 private:
     map <string, ofSerial> Kikube_serial_hashmap;
     map <string, Kikube> Kikube_hashmap;
+    bool sleepActive;
+    ofThread serialThread;
 		
 };

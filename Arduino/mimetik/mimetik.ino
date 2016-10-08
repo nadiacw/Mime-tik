@@ -36,7 +36,7 @@ Pixels *pixelObj;
 States *stateObj;
 
 char values[255];
-
+bool goToSleep = false;
 int i = 0;
 
 unsigned long TIME;
@@ -102,12 +102,12 @@ void loop() {
   if (stateObj->current_state == 's' || !stateObj->isMoving) {
     while (!stateObj->isMoving)
     {
-      Serial.println("not moving!");
+      //Serial.println("not moving!");
       ReadAcc();
       pixelObj->sleepPixels(pixels);
     }
 
-    Serial.println("moved!");
+    //Serial.println("moved!");
     pixelObj->RGBColor(pixels, 200, 200, 200);
     pixels.setBrightness(255);
   }
@@ -129,7 +129,8 @@ void loop() {
       clean();
   }
 
-
+  
+  
   /**************** Transition mode ***************/
   if (stateObj->next_state != '0' && stateObj->current_state != 's')
   {
@@ -143,8 +144,6 @@ void loop() {
     }
 
     stateObj->beginStateTransition();
-    
-   
   }
 
   /**************** Pixels in transition ********************/
@@ -269,15 +268,19 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void detectFace(Vector3 * currentAcc)
 {
- 
-
   if (abs(currentAcc->x - lastAccRef->x) > 8 || abs(currentAcc->y - lastAccRef->y) > 8 || abs(currentAcc->z - lastAccRef->z) > 8 )
   {
-    if(millis() - stateObj->temp > 60000 ) {
-      Serial.println("Has passed 60 seconds");
+    if(!goToSleep) {
       
-      stateObj->isMoving = false;
-      stateObj->current_state = 's';
+      if(millis() - stateObj->temp > 60000 ) {
+        Serial.println("Has passed 60 seconds");
+        goToSleep = true;
+        stateObj->isMoving = false;
+        stateObj->current_state = 's';
+        stateObj->temp = TIME;
+        Serial.println("Send sleep message");
+        BT.write("s:sleep?#");
+      }
     }
   } 
   else
@@ -292,10 +295,9 @@ void detectFace(Vector3 * currentAcc)
       amountDiff->y = 0;
       amountDiff->z = 0;
       stateObj->temp = TIME; 
+      goToSleep = false;
     }
-
   }
-
 }
 
 // clean values

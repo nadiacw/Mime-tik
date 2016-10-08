@@ -52,6 +52,23 @@ void Kikube::setTrack(ofxAbletonLiveTrack* track)
 }
 
 
+void Kikube::KikubeFadeOut()
+{
+    if(!firstIteration)
+    {
+    cout << "ableton track is: " << this->abletonTrack->getName() << endl;
+    this->abletonTrack->initTime = ofGetElapsedTimef();
+    this->abletonTrack->setFadeOut(ofGetElapsedTimef() + 1);
+    this->firstIteration = false;
+        this->abletonTrack_previous = this->abletonTrack;
+    }
+    else
+    {
+        cout << "didnt fade out because is first interaction" << endl;
+    }
+}
+
+
 int Kikube::getPreviousIndexTrack() {
     
     return this->indexPrevious;

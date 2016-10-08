@@ -22,6 +22,7 @@ public:
     States kikube_state;
     
 	void setTrack(ofxAbletonLiveTrack* track);
+    void KikubeFadeOut();
     int getPreviousIndexTrack();
 	string direction;
     ofxAbletonLiveTrack* abletonTrack;
