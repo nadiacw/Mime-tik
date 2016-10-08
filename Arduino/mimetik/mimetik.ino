@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
 // Bluetooth Communication and state implementation //
 //////////////////////////////////////////////////////
 #include "Adafruit_TCS34725.h"
@@ -39,7 +39,7 @@ char values[255];
 bool goToSleep = false;
 int i = 0;
 
-unsigned long TIME;
+unsigned long TIME,time_waiting;
 
 
 /********* Bluetooth settings *********/
@@ -63,14 +63,15 @@ void setup() {
   x = analogRead(0);
   y = analogRead(1);
   z = analogRead(2);
-  currentAcc = new  Vector3(x, y, z);
-  xtemp = constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255);
-  ytemp = constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255);
-  ztemp = constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255);
+  xtemp = mapf(constrain(round(((float)x - zero_G) / scale * 127 + 127), 0, 255),0,255,0,10);
+  ytemp = mapf(constrain(round(((float)y - zero_G) / scale * 127 + 127), 0, 255),0,255,0,10);
+  ztemp = mapf(constrain(round(((float)z - zero_G) / scale * 127 + 127), 0, 255),0,255,0,10);
+  currentAcc = new  Vector3(xtemp, ytemp, ztemp);
+  lastAccRef = new Vector3(xtemp, ytemp, ztemp);
 
-  lastAccRef->x = mapf(xtemp, 0, 255, 0, 10);
+  /*lastAccRef->x = mapf(xtemp, 0, 255, 0, 10);
   lastAccRef->y = mapf(ytemp, 0, 255, 0, 10);
-  lastAccRef->z = mapf(ztemp, 0, 255, 0, 10);
+  lastAccRef->z = mapf(ztemp, 0, 255, 0, 10);*/
   
   amountDiff = new Vector3(0,0,0);
   // initialize the sensor color object
@@ -97,20 +98,44 @@ void loop() {
   while (millis() < 1000) {
     colorSensorObj->calibrate(tcs);
   }
-
-  /**************** SLEEP state ***************/
-  if (stateObj->current_state == 's' || !stateObj->isMoving) {
-    while (!stateObj->isMoving)
-    {
-      //Serial.println("not moving!");
+  /**************** SLEEP state RE-INITIALIZATION  ***************/
+  if (stateObj->current_state == 'i') {
+    Serial.println("Re init start");
+    time_waiting = TIME;
+    Serial.println("Send sleep message");
+    BT.write("s:sleep?#");
+    while(time_waiting < TIME + 10000) {
       ReadAcc();
       pixelObj->sleepPixels(pixels);
+      time_waiting = millis();
+      
     }
-
-    //Serial.println("moved!");
-    pixelObj->RGBColor(pixels, 200, 200, 200);
-    pixels.setBrightness(255);
-  }
+    // Sleep mode again
+    goToSleep = false;
+    old_color = -1;
+    stateObj->isMoving = false;   
+    stateObj->next_state = '0';
+    stateObj->current_state = 's';
+    stateObj->temp = TIME;
+    Serial.println("Re init finish");
+    return;
+  
+  } else {
+    /**************** SLEEP state ***************/
+   
+    if (stateObj->current_state == 's' || !stateObj->isMoving) {
+      while (!stateObj->isMoving)
+      {
+        //Serial.println("not moving!");
+        ReadAcc();
+        pixelObj->sleepPixels(pixels);
+      }
+  
+      //Serial.println("moved!");
+      pixelObj->RGBColor(pixels, 100, 100, 100);
+      pixels.setBrightness(255);
+    }
+  }// end if else reinitialization statement
 
 
   /********************** Color sensor detection ***************/
@@ -123,10 +148,27 @@ void loop() {
     // get value from OF
     char value = BT.read();
     if (value != '#')
-      values[i++] = value;
-
-    if (value == '#')
+    {
+      // Force sleep and reinitialization time
+      if(value == 'i') 
+      {
+        Serial.print("Force reinit: ");
+        Serial.println(value);
+        stateObj->current_state = 'i';
+        return; 
+      } 
+      else
+      { 
+        values[i++] = value;
+      }
+    }
+    
+    if (value == '#') 
+    {
       clean();
+    }
+
+    
   }
 
   
@@ -196,11 +238,13 @@ void loop() {
 
 void ReadColorSensor() {
 
-  colorSensorObj->calculateColor(tcs);  //colorSensorObj->printResults();
+  colorSensorObj->calculateColor(tcs);  
+  colorSensorObj->printResults();
   detectedColor = colorSensorObj->detectColor();
-
+  
   if (old_color != detectedColor) {
     old_color = detectedColor;
+    
 
     /**************** WRITE Bluetooth messages ***************/
     switch (detectedColor)
@@ -268,15 +312,27 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 void detectFace(Vector3 * currentAcc)
 {
-  if (abs(currentAcc->x - lastAccRef->x) > 8 || abs(currentAcc->y - lastAccRef->y) > 8 || abs(currentAcc->z - lastAccRef->z) > 8 )
+  /*Serial.print(" diff x: ");
+  Serial.println(abs(currentAcc->x - lastAccRef->x));
+  Serial.print(" diff y: ");
+  Serial.println(abs(currentAcc->y - lastAccRef->y));
+  Serial.print(" diff z: ");
+  Serial.println(abs(currentAcc->z - lastAccRef->z));
+  */
+  if (abs(currentAcc->x - lastAccRef->x) == 0 && abs(currentAcc->y - lastAccRef->y) == 0  && abs(currentAcc->z - lastAccRef->z) ==  0 )
   {
-    if(!goToSleep) {
+    
+    if(goToSleep) {
       
+      lastAccRef->x = currentAcc->x;
+      lastAccRef->y = currentAcc->y;
+      lastAccRef->z = currentAcc->z;
       if(millis() - stateObj->temp > 60000 ) {
         Serial.println("Has passed 60 seconds");
-        goToSleep = true;
-        stateObj->isMoving = false;
+        goToSleep = false;
+        stateObj->isMoving = false;   
         stateObj->current_state = 's';
+        old_color = -1;
         stateObj->temp = TIME;
         Serial.println("Send sleep message");
         BT.write("s:sleep?#");
@@ -288,14 +344,18 @@ void detectFace(Vector3 * currentAcc)
     amountDiff->x += abs(currentAcc->x - lastAccRef->x); 
     amountDiff->y += abs(currentAcc->y - lastAccRef->y); 
     amountDiff->z += abs(currentAcc->z - lastAccRef->z); 
+    
 
-    if(amountDiff->x > 10 || amountDiff->y > 10 || amountDiff->z > 15) {
+    if(amountDiff->x > 10 || amountDiff->y > 10 || amountDiff->z > 10) {
       stateObj->isMoving = true;
       amountDiff->x = 0;
       amountDiff->y = 0;
       amountDiff->z = 0;
       stateObj->temp = TIME; 
-      goToSleep = false;
+      goToSleep = true;
+      lastAccRef->x = currentAcc->x;
+      lastAccRef->y = currentAcc->y;
+      lastAccRef->z = currentAcc->z;
     }
   }
 }
@@ -309,3 +369,4 @@ void clean()
   }
   i = 0;
 }
+
