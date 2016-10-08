@@ -14,11 +14,11 @@ Vector3::~Vector3()
 
 void Vector3::printValues()
 {
-  Serial.println();
+  /*Serial.println();
   Serial.print(x);
   Serial.print("\t");
   Serial.print(y);
   Serial.print("\t");
   Serial.print(z);
-  Serial.print("\n");
+  Serial.print("\n");*/
 }

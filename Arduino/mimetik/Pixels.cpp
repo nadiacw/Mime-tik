@@ -19,7 +19,7 @@ Pixels::~Pixels()
 
 void Pixels::randomColor(Adafruit_NeoPixel &_pixels)
 {
-  Serial.println("in rand");
+  //Serial.println("in rand");
   for (int i = 0; i < NUMPIXELS; i++) {
     _pixels.setPixelColor(i, _pixels.Color(random(0, 255), random(0, 255), random(0, 255)));
     _pixels.show();
@@ -66,7 +66,7 @@ void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _
     color_new = Vector3(0, 0, 255);
   }
   else {
-    Serial.println("MAAAAAAAL");
+    //Serial.println("MAAAAAAAL");
   }
 
 
@@ -80,7 +80,7 @@ void Pixels::transitionPixels(Adafruit_NeoPixel &_pixels, char _newColor, char _
     color_old = Vector3(0, 0, 255);
   }
   else {
-    Serial.println("MU MAAAL");
+    //Serial.println("MU MAAAL");
   }
 
   if (_newColor == 'r') {
@@ -163,8 +163,8 @@ void Pixels::ColorShift(Adafruit_NeoPixel &_pixels, char _kColor, float _accx, f
   }
 
   else if (_kColor == 'b') {
-    r_tint = map(_accy, 0, 10, 0, 60);
-    g_tint = map(_accz, 0, 10, 0, 90);
+    r_tint = map(_accy, 0, 10, 0, 90);
+    g_tint = map(_accz, 0, 10, 0, 30);
     b_tint = map(_accx, 0, 10, 220, 255);
     for (int i = 0; i < NUMPIXELS; i++ ) {
       _pixels.setPixelColor(i, _pixels.Color(r_tint, g_tint, b_tint));

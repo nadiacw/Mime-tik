@@ -74,6 +74,8 @@ void ColorSensor::calculateColor(Adafruit_TCS34725 tcs)
   current_g = abs(current_g - c_green);
   current_b = abs(current_b - c_blue);
 
+  
+  
 }
 
 
@@ -83,9 +85,9 @@ int ColorSensor::detectColor()
   int temp_max_rgb;
   int totalSum = (current_r + current_g + current_b);
   
-Serial.println(abs(current_g / totalSum - 0.33)*100);
+  //Serial.println(abs(current_g / totalSum - 0.33)*100);
 
-  if (abs(current_g / totalSum - 0.33) * 100 > 15)
+  if (abs(current_g / totalSum - 0.33) * 100 > 10)
   {
     temp_max_rgb = getMax(current_r, current_g, current_b);
   }

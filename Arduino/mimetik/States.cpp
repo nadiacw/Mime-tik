@@ -37,19 +37,20 @@ void States::setNextState() {
   }
   else
   {
+    
     Serial.println("Sorry, there's a problem with the direction ");
   }
 }
 
 void States::beginStateTransition()
 {
-    Serial.print("Previous millis: ");  Serial.print(previousMillis); Serial.print(" and moment is: "); Serial.println(millis() - previousMillis);
+    //Serial.print("Previous millis: ");  Serial.print(previousMillis); Serial.print(" and moment is: "); Serial.println(millis() - previousMillis);
     if (millis() - previousMillis >= interval) {
       this->current_state = this->next_state;
       this->next_state = '0';
       stateMode = true;
       transitionMode = false;
-      Serial.println("Set up next state value");
+      //Serial.println("Set up next state value");
     }
     else
     {
