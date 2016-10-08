@@ -12,6 +12,7 @@ void ofApp::setup(){
     string id_string = "";
  
     vector <ofSerialDeviceInfo> deviceList = mySerial.getDeviceList(); //Every port
+    
     for (int i = 0; i < deviceList.size(); i++) {
         
         if(deviceList[i].getDeviceName().find("tty.HC-06-DevB") == 0) {
@@ -400,10 +401,15 @@ void ofApp::keyPressed(int key){
         ofBackground(255, 0, 0);
     }
     
-    if(key == 'g')
+    if(key == 'i')
     {
-        Kikube_serial_hashmap["Kiku_1"].writeByte('r');
-        ofBackground(0, 255, 0);
+        unsigned char rand[3] = "i#";
+        map<string,ofSerial>::iterator iterator = Kikube_serial_hashmap.begin();
+        for(; iterator != Kikube_serial_hashmap.end(); iterator++)
+        {
+            iterator->second.writeBytes(rand,2);
+        }
+        
     }
 
 	if (key == 'd') {
