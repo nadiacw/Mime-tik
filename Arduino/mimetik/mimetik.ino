@@ -46,7 +46,7 @@ unsigned long TIME,time_waiting;
 SoftwareSerial BT(10, 11); // Bluetooth 10 RX, 11 TX.
 
 /**************** Color sensor settings *************************/
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_101MS, TCS34725_GAIN_1X);
 
 /*************** Pixels settings ****************/
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -76,7 +76,7 @@ void setup() {
   amountDiff = new Vector3(0,0,0);
   // initialize the sensor color object
   colorSensorObj = new ColorSensor(tcs);
-
+  
   //initialize the led strip object
   pixels.begin();
   pixelObj = new Pixels();
@@ -86,7 +86,6 @@ void setup() {
   stateObj = new States();
   stateObj->current_state = 's';
   stateObj->isMoving = false;
-  
   Serial.print(" end setup");
 }
 
@@ -94,15 +93,10 @@ void loop() {
 
   /**************** GET MILLIS ***************/
   TIME = millis();
-
-  while (millis() < 1000) {
-    colorSensorObj->calibrate(tcs);
-  }
+  
   /**************** SLEEP state RE-INITIALIZATION  ***************/
   if (stateObj->current_state == 'i') {
-    Serial.println("Re init start");
     time_waiting = TIME;
-    Serial.println("Send sleep message");
     BT.write("s:sleep?#");
     while(time_waiting < TIME + 10000) {
       ReadAcc();
@@ -110,19 +104,17 @@ void loop() {
       time_waiting = millis();
       
     }
-    // Sleep mode again
+    // Sleep mode again - default values
     goToSleep = false;
     old_color = -1;
     stateObj->isMoving = false;   
     stateObj->next_state = '0';
     stateObj->current_state = 's';
-    stateObj->temp = TIME;
-    Serial.println("Re init finish");
-    return;
+    return; // go back to the beginning of the loop function
   
   } else {
+    
     /**************** SLEEP state ***************/
-   
     if (stateObj->current_state == 's' || !stateObj->isMoving) {
       while (!stateObj->isMoving)
       {
@@ -238,7 +230,7 @@ void loop() {
 
 void ReadColorSensor() {
 
-  colorSensorObj->calculateColor(tcs);  
+  colorSensorObj->calculateColor(tcs, stateObj);  
   colorSensorObj->printResults();
   detectedColor = colorSensorObj->detectColor();
   
@@ -332,7 +324,7 @@ void detectFace(Vector3 * currentAcc)
         goToSleep = false;
         stateObj->isMoving = false;   
         stateObj->current_state = 's';
-        old_color = -1;
+        //old_color = -1;
         stateObj->temp = TIME;
         Serial.println("Send sleep message");
         BT.write("s:sleep?#");
