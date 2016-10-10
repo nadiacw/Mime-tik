@@ -111,6 +111,7 @@ int ColorSensor::detectColor()
   }
   else
   {
+    firstDetection = true;
     return max_rgb;
   }
 
