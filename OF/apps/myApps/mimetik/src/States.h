@@ -16,6 +16,7 @@ public:
     ~States();
     
     string getState();
+    string getForwardState();
     void setState(string state);
     
     void defineDirection(string previous_state, string actual_state);

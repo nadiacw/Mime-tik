@@ -26,6 +26,11 @@ string States::getState() {
     return state;
 }
 
+string States::getForwardState()
+{
+    return forwardState;
+}
+
 void States::setState(string _forward_state) {
     
     // define the direction that kikube has.

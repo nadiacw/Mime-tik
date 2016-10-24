@@ -45,7 +45,7 @@ void ofApp::setup(){
 	live.setup("localhost", this, &ofApp::setupAbletonGui);
 	
 	//waits until connection is done
-	while (live.getTracks().size() < 34)
+	while (live.getTracks().size() < 32)
 	{
 		live.update();
 	}
@@ -388,7 +388,7 @@ int ofApp::recursiveGetIndex(vector<ofxAbletonLiveTrack*> listTrack) {
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    
+    drawKikubeState();
 }
 
 //--------------------------------------------------------------
@@ -442,3 +442,76 @@ void ofApp::setupAbletonGui()
 	// point we can generate a gui
 	gui.setup(&live);
 }
+
+void ofApp::drawKikubeState()
+{
+    map<string,Kikube>::iterator it_kikube = Kikube_hashmap.begin();
+    int counter = 0;
+    int numDivisions = 4;
+    initX = ofGetWidth()/(numDivisions*2);
+    initY = ofGetHeight()/(numDivisions*2);
+    offsetX = ofGetWidth()/numDivisions;
+    offsetY = ofGetHeight()/numDivisions;
+    int size = max(ofGetHeight(), ofGetWidth())/2;
+    for(;it_kikube != Kikube_hashmap.end(); it_kikube++)
+    {
+        string state = it_kikube->second.kikube_state.getState();
+        int posX = initX+offsetX*counter-(size/(numDivisions*2));
+        int posY = initY+offsetY*(int)(counter/numDivisions)-(size/(numDivisions*2));
+        if (state == "red")
+        {
+            ofSetColor(186, 59, 70);
+            ofDrawRectangle(posX, posY, size/numDivisions, size/numDivisions);
+        }
+        else if(state == "green")
+        {
+            ofSetColor(59, 178, 115);
+            ofDrawRectangle(posX, posY, size/numDivisions, size/numDivisions);
+        }
+        else if(state == "blue")
+        {
+            ofSetColor(99, 180, 209);
+            ofDrawRectangle(posX, posY, size/numDivisions, size/numDivisions);
+        }
+        else if(state == "sleep")
+        {
+            ofSetColor(255, 255, 255);
+            ofDrawRectangle(posX, posY, size/numDivisions, size/numDivisions);
+        }
+        else{
+            //UNDEFINED
+            ofSetColor(255, 255, 255);
+            ofDrawRectangle(posX, posY, size/numDivisions, size/numDivisions);
+        }
+        
+        string nextstate = it_kikube->second.kikube_state.getForwardState();
+        int posMiniX = initX+offsetX*counter-(size/(10*2));
+        int posMiniY = initY+offsetY*(int)(counter/numDivisions)-(size/(10*2));
+        if (nextstate == "red")
+        {
+            ofSetColor(186, 59, 70);
+            ofDrawRectangle(posMiniX, posMiniY, size/10, size/10);
+        }
+        else if(nextstate == "green")
+        {
+            ofSetColor(59, 178, 115);
+            ofDrawRectangle(posMiniX, posMiniY, size/10, size/10);
+        }
+        else if(nextstate == "blue")
+        {
+            ofSetColor(99, 180, 209);
+            ofDrawRectangle(posMiniX, posMiniY, size/10, size/10);
+        }
+        else if(nextstate == "sleep")
+        {
+            ofSetColor(255, 255, 255);
+            ofDrawRectangle(posMiniX, posMiniY, size/10, size/10);
+        }
+        
+        
+        ofSetColor(127, 127, 127);
+        counter++;
+    }
+}
+
+

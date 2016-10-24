@@ -34,6 +34,13 @@ public:
     int messageIndex;
     char bytesReceived[NUM_MSG_BYTES];
     
+    //DRAW
+    void drawKikubeState();
+    int initX;
+    int initY;
+    int offsetX;
+    int offsetY;
+    
     //ABLETON
     bool workWithAbleton;
     ofxAbletonLive live;
