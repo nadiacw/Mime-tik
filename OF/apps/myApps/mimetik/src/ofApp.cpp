@@ -45,7 +45,7 @@ void ofApp::setup(){
 	live.setup("localhost", this, &ofApp::setupAbletonGui);
 	
 	//waits until connection is done
-	while (live.getTracks().size() < 32)
+	while (live.getTracks().size() < 34)
 	{
 		live.update();
 	}
@@ -403,7 +403,7 @@ void ofApp::keyPressed(int key){
     
     if(key == 'i')
     {
-        unsigned char rand[3] = "i#";
+        unsigned char rand[3] = "i#"; 
         map<string,ofSerial>::iterator iterator = Kikube_serial_hashmap.begin();
         for(; iterator != Kikube_serial_hashmap.end(); iterator++)
         {
@@ -456,7 +456,7 @@ void ofApp::drawKikubeState()
     for(;it_kikube != Kikube_hashmap.end(); it_kikube++)
     {
         string state = it_kikube->second.kikube_state.getState();
-        int posX = initX+offsetX*counter-(size/(numDivisions*2));
+        int posX = initX+offsetX*(counter%numDivisions)-(size/(numDivisions*2));
         int posY = initY+offsetY*(int)(counter/numDivisions)-(size/(numDivisions*2));
         if (state == "red")
         {
@@ -485,7 +485,7 @@ void ofApp::drawKikubeState()
         }
         
         string nextstate = it_kikube->second.kikube_state.getForwardState();
-        int posMiniX = initX+offsetX*counter-(size/(10*2));
+        int posMiniX = initX+offsetX*(counter%numDivisions)-(size/(10*2));
         int posMiniY = initY+offsetY*(int)(counter/numDivisions)-(size/(10*2));
         if (nextstate == "red")
         {
